@@ -6,7 +6,7 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 14:01:19 by stephanie       #+#    #+#               #
-#  Updated: 2026/06/30 15:09:13 by stephanie       ###   ########.fr        #
+#  Updated: 2026/06/30 15:42:51 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module for discovering and loading the vLLM repository files."""
