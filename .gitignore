@@ -1,0 +1,16 @@
+.venv/
+.uv_cache/
+
+#python
+__pycache__
+.mypy_cache
+.pytest_cache
+*.py[cod]
+
+#IDE
+.vscode/
+
+data/
+datasets_public/
+datasets_public.zip
+
