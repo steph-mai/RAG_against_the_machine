@@ -6,7 +6,7 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 15:28:09 by stephanie       #+#    #+#               #
-#  Updated: 2026/06/30 17:56:33 by stephanie       ###   ########.fr        #
+#  Updated: 2026/06/30 18:02:39 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining the chunking strategies for different file types."""
@@ -109,7 +109,7 @@ class PyChunker(Chunker):
 class MdChunker(Chunker):
     def chunk(self, content: str, file_path: str, max_size: int):
         pass
-    1. Séparer le fichier en une liste de lignes (avec splitlines(keepends=True)).
+# 1. Séparer le fichier en une liste de lignes (avec splitlines(keepends=True)).
 # 2. Initialiser un buffer vide, les index (start_index = 0, current_len = 0).
 # 3. Initialiser un booléen (in_code_block = False) pour tracker les blocs ```.
 
