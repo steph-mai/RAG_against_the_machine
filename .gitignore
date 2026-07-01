@@ -14,3 +14,5 @@ data/
 datasets_public/
 datasets_public.zip
 
+vllm-0.10.1/
+vllm-0.10.1.zip
