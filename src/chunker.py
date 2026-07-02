@@ -6,7 +6,7 @@
 #  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/01 09:37:31 by stmaire         #+#    #+#               #
-#  Updated: 2026/07/01 17:59:31 by stmaire         ###   ########.fr        #
+#  Updated: 2026/07/02 13:28:17 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining the chunking strategies for different file types."""
@@ -23,7 +23,6 @@ class Chunker(ABC):
             content: str,
             file_path: str,
             max_size: int,
-            overlap: int = 200
             ) -> Iterator[MinimalSource]:
         """Abstract method to split content into chunks.
 
@@ -36,7 +35,7 @@ class Chunker(ABC):
             Iterator[MinimalSource]: An iterator of type-safe chunk metadata.
         """
 
-        overlap = min(overlap, max_size//2)
+        overlap = max_size // 10
         lines = content.splitlines(keepends=True)
 
         start_index = 0
@@ -135,17 +134,17 @@ class PyChunker(Chunker):
             if stripped_line.startswith(("def ", "class ", "async def ")):
                 if not state["is_in_decorator_block"]:
                     should_cut = True
-                    state["is_in_decorator_block"] = False
+                state["is_in_decorator_block"] = False
 
             elif stripped_line.startswith("@"):
                 if not state["is_in_decorator_block"]:
                     should_cut = True
-                    state["is_in_decorator_block"] = True
+                state["is_in_decorator_block"] = True
 
             elif is_boundary:
                 if not state["is_in_decorator_block"]:
                     should_cut = True
-                    state["is_in_decorator_block"] = False
+                state["is_in_decorator_block"] = False
         return should_cut
 
 
@@ -158,38 +157,40 @@ class MdChunker(Chunker):
         max_size: int, state: dict | None
     ) -> bool:
 
+        stripped_line = line.lstrip()
 
+        if stripped_line.startswith("```"):
+            state["is_in_code_block"] = not state["is_in_code_block"]
+            return False
+        if state["is_in_code_block"]:
+            return False
+        if stripped_line.startswith("# ") and current_chunk_length > 0:
+            return True
+        if stripped_line.startswith(("## ", "!!! ")) and (
+                current_chunk_length > int(max_size * 0.7)):
+            return True
+        if stripped_line.startswith("[](){") and (
+                current_chunk_length > int(max_size * 0.95)):
+            return True
 
-# 1. Séparer le fichier en une liste de lignes (avec splitlines(keepends=True)).
-# 2. Initialiser un buffer vide, les index (start_index = 0, current_len = 0).
-# 3. Initialiser un booléen (in_code_block = False) pour tracker les blocs ```.
-
-# 4. Pour chaque ligne du fichier :
-#     a. Calculer sa longueur (line_len).
-#     b. Détecter si la ligne ouvre ou ferme un bloc de code (commence par ```).
-#        -> Si oui, inverser la valeur de in_code_block.
-
-#     c. Condition de découpage "Intelligent" :
-#        -> Est-ce que la ligne commence par "#" (Titre #, ##, ###) ET qu'on n'est PAS dans un bloc de code ?
-#        -> Si oui ET que le buffer n'est pas vide :
-#           -> On YIELD le MinimalSource accumulé jusqu'ici.
-#           -> On vide le buffer (current_len = 0) et met à jour start_index.
-
-#     d. Sécurité de taille (Garde-fou strict) :
-#        -> Si (current_len + line_len) > max_size :
-#           -> Si on est au milieu d'un bloc de code OU d'un paragraphe, on est obligé de couper de force.
-#           -> On YIELD le MinimalSource accumulé, on vide le buffer et met à jour start_index.
-
-#     e. Ajouter la ligne au buffer, et faire : current_len += line_len
-
-# 5. En dehors de la boucle : YIELD le reste du buffer s'il contient encore du texte.
+        # is_major_boundary = stripped_line.startswith((
+        #         "# ", "## ", "### ",
+        #         "!!! ", "??? ",
+        #         "[](){"
+        #     ))
+        # if is_major_boundary:
+        #     if current_chunk_length > min(80, max_size // 20):
+        #         return True
+        if not stripped_line and current_chunk_length > 0.9 * max_size:
+            return True
+        return False
 
 
 if __name__ == "__main__":
     from pathlib import Path
     from src.models import MinimalSource
 
-    path = Path("vllm-0.10.1/requirements/test.txt")
+    path = Path("vllm-0.10.1/docs/usage/v1_guide.md")
     MAX_SIZE_LIMIT = 2000
     file_path_str = str(path)
 
@@ -208,6 +209,9 @@ if __name__ == "__main__":
 
         elif path.suffix == ".txt":
             chunker = TxtChunker()
+
+        elif path.suffix == ".md":
+            chunker = MdChunker()
 
         chunks = list(chunker.chunk(
                 content=real_content,
