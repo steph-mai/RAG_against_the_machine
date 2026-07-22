@@ -6,7 +6,7 @@
 #  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/01 09:37:31 by stmaire         #+#    #+#               #
-#  Updated: 2026/07/02 13:28:17 by stmaire         ###   ########.fr        #
+#  Updated: 2026/07/22 11:09:36 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining the chunking strategies for different file types."""
@@ -65,7 +65,8 @@ class Chunker(ABC):
                     yield MinimalSource(
                         file_path=file_path,
                         first_character_index=start_index + index,
-                        last_character_index=start_index + index + len(line_slice)
+                        last_character_index=start_index + index + len(
+                            line_slice)
                     )
                 start_index += line_length
                 continue

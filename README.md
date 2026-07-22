@@ -138,13 +138,13 @@ uv run python -m moulinette evaluate_student_answers <student_answer_path>
 
       "question_id": "uuid",
 
-      "question_str": "What is the question text?",
+      "question": "What is the question text?",
 
       "retrieved_sources": [
 
         {
 
-          "file_path": "path/to/file",
+          "file_path": "data/raw/vllm-0.10.1/path/to/file",
 
           "first_character_index": 0,
 
@@ -186,7 +186,7 @@ uv run python -m moulinette evaluate_student_answers <student_answer_path>
 
         {
 
-          "file_path": "path/to/file",
+          "file_path": "data/raw/vllm-0.10.1/path/to/file",
 
           "first_character_index": 0,
 
