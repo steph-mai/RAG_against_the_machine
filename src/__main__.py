@@ -4,7 +4,7 @@ from pathlib import Path
 from src.models import StudentSearchResults, StudentSearchResultsAndAnswer
 from src.utils.logger import logger
 from src.errors import RagCliArgumentError, RagError
-from src.indexer import DocIndexer
+from src.codebase_indexer.indexer import DocIndexer
 
 
 def handle_cli_errors(function) -> callable:
@@ -35,6 +35,43 @@ class RAGCli():
         indexer = DocIndexer(max_chunk_size=2000)
         index_path: Path = indexer.build_and_save_index()
         return index_path
+
+        # pour afficher le contenu des chunks en test
+        # indexer = DocIndexer()
+        # chunks = indexer.build_and_save_index()
+        # total_chunks = len(chunks)
+
+        # print(f"✅ Ingestion complete! Indexed {total_chunks} chunks under data/processed/")
+
+        # # ==========================================
+        # # 2. AFFICHAGE DE L'ÉCHANTILLON (Les 3 premiers)
+        # # ==========================================
+        # print("\n" + "="*60)
+        # print("🔍 ÉCHANTILLON DES 3 PREMIERS CHUNKS")
+        # print("="*60)
+
+        # # On boucle uniquement sur les 3 premiers éléments (chunks[:3])
+        # for i, source in enumerate(chunks[:3], 1):
+        #     # Comme MinimalSource ne contient que les index, il faut rouvrir le fichier
+        #     with open(source.file_path, "r", encoding="utf-8") as f:
+        #         full_content = f.read()
+
+        #     # On découpe exactement le texte du chunk avec les index
+        #     chunk_text = full_content[source.first_character_index : source.last_character_index]
+
+        #     print(f"\n📦 CHUNK N°{i}/{total_chunks} | Fichier : {source.file_path}")
+        #     print(f"   Index : [{source.first_character_index} -> {source.last_character_index}]")
+        #     print(f"   Taille : {len(chunk_text)} caractères")
+        #     print("." * 40)
+
+        #     # On affiche un aperçu (les 5 premières lignes max)
+        #     lines = chunk_text.splitlines()
+        #     for line in lines[:5]:
+        #         print(f"   | {line}")
+
+        #     if len(lines) > 5:
+        #         print("   | [... reste du contenu masqué ...]")
+        #     print("." * 40)
 
     @handle_cli_errors
     def search(self, query: str, k: int):
