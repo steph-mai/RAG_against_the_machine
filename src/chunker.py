@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  chunker.py                                        :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
+#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/01 09:37:31 by stmaire         #+#    #+#               #
-#  Updated: 2026/07/22 11:09:36 by stmaire         ###   ########.fr        #
+#  Updated: 2026/07/21 17:19:42 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining the chunking strategies for different file types."""
@@ -187,62 +187,62 @@ class MdChunker(Chunker):
         return False
 
 
-if __name__ == "__main__":
-    from pathlib import Path
-    from src.models import MinimalSource
+# if __name__ == "__main__":
+#     from pathlib import Path
+#     from src.models import MinimalSource
 
-    path = Path("vllm-0.10.1/docs/usage/v1_guide.md")
-    MAX_SIZE_LIMIT = 2000
-    file_path_str = str(path)
+#     path = Path("data/raw/vllm-0.10.1/docs/usage/v1_guide.md")
+#     MAX_SIZE_LIMIT = 2000
+#     file_path_str = str(path)
 
-    print("=" * 60)
-    print(f"ANALYSE ET DÉCOUPAGE DE : {path}")
-    print("=" * 60)
+#     print("=" * 60)
+#     print(f"ANALYSE ET DÉCOUPAGE DE : {path}")
+#     print("=" * 60)
 
-    if not path.exists():
-        print(f"❌ Erreur : Le fichier '{path}' n'a pas été trouvé.")
-    else:
-        with open(path, mode="r", encoding="utf-8") as f:
-            real_content = f.read()
+#     if not path.exists():
+#         print(f"❌ Erreur : Le fichier '{path}' n'a pas été trouvé.")
+#     else:
+#         with open(path, mode="r", encoding="utf-8") as f:
+#             real_content = f.read()
 
-        if path.suffix == ".py":
-            chunker = PyChunker()
+#         if path.suffix == ".py":
+#             chunker = PyChunker()
 
-        elif path.suffix == ".txt":
-            chunker = TxtChunker()
+#         elif path.suffix == ".txt":
+#             chunker = TxtChunker()
 
-        elif path.suffix == ".md":
-            chunker = MdChunker()
+#         elif path.suffix == ".md":
+#             chunker = MdChunker()
 
-        chunks = list(chunker.chunk(
-                content=real_content,
-                file_path=file_path_str,
-                max_size=MAX_SIZE_LIMIT
-            ))
+#         chunks = list(chunker.chunk(
+#                 content=real_content,
+#                 file_path=file_path_str,
+#                 max_size=MAX_SIZE_LIMIT
+#             ))
 
-        # 4. Affichage des statistiques globales (Validation)
-        total_chunks = len(chunks)
-        print(f"📊 Statistiques d'ingestion :")
-        print(f"   - Nombre total de caractères dans le fichier : {len(real_content)}")
-        print(f"   - Nombre de chunks générés : {total_chunks}")
-        print("-" * 60)
+#         # 4. Affichage des statistiques globales (Validation)
+#         total_chunks = len(chunks)
+#         print(f"📊 Statistiques d'ingestion :")
+#         print(f"   - Nombre total de caractères dans le fichier : {len(real_content)}")
+#         print(f"   - Nombre de chunks générés : {total_chunks}")
+#         print("-" * 60)
 
-        # 5. Affichage d'un échantillon (ex: les 3 premiers chunks)
-        for i, source in enumerate(chunks, 1):
-            extracted_text = real_content[source.first_character_index : source.last_character_index]
+#         # 5. Affichage d'un échantillon (ex: les 3 premiers chunks)
+#         for i, source in enumerate(chunks, 1):
+#             extracted_text = real_content[source.first_character_index : source.last_character_index]
 
-            print(f"\n🔍 [ÉCHANTILLON] CHUNK N°{i}/{total_chunks}")
-            print(f"   Index caractères : [{source.first_character_index} -> {source.last_character_index}]")
-            print(f"   Taille du chunk : {len(extracted_text)} caractères")
-            print("." * 40)
-            # On affiche les 5 premières lignes pour inspecter le contenu visuellement
-            sample_lines = extracted_text.splitlines()[:5]
-            for line in sample_lines:
-                # print(f"   | {line.endwith('\n') and line or line + '\n'}", end="")
-                print(f"{line}")
-            if len(extracted_text.splitlines()) > 5:
-                print("   | [... reste du contenu masqué ...]")
-            print("." * 40)
+#             print(f"\n🔍 [ÉCHANTILLON] CHUNK N°{i}/{total_chunks}")
+#             print(f"   Index caractères : [{source.first_character_index} -> {source.last_character_index}]")
+#             print(f"   Taille du chunk : {len(extracted_text)} caractères")
+#             print("." * 40)
+#             # On affiche les 5 premières lignes pour inspecter le contenu visuellement
+#             sample_lines = extracted_text.splitlines()[:5]
+#             for line in sample_lines:
+#                 # print(f"   | {line.endwith('\n') and line or line + '\n'}", end="")
+#                 print(f"{line}")
+#             if len(extracted_text.splitlines()) > 5:
+#                 print("   | [... reste du contenu masqué ...]")
+#             print("." * 40)
 
         # # 6. Vérification automatique des contraintes du sujet (Edge Cases)
         # print("\n🛡️ Vérification des contraintes du sujet :")
