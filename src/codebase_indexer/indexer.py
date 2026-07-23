@@ -6,7 +6,7 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/23 16:23:37 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/23 17:18:37 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 from pathlib import Path
@@ -71,12 +71,24 @@ class DocIndexer:
         if not all_chunks:
             raise RagLoadError(f"No chunk in directory: {input_dir}")
 
-        # 6. TODO: Passer all_chunks au Tokenizer pour TF-IDF / BM25
-        # final_index = self.tokenizer.build_vocabulary_and_tokenize(all_chunks)
-        # 7. TODO: Sauvegarder dans data/processed/index.json
-        # self._save_to_json(final_index, Path("data/processed/index.json"))
+    #     5. TOKENISATION ET PRÉPARATION DE L'INDEX (Le rôle du Tokenizer) :
+    #    - Créer une liste vide pour stocker les fréquences de termes et une liste pour les chunks nettoyés.
+    #    - Pour chaque chunk de notre liste globale :
+    #        * Extraire le texte brut.
+    #        * Le nettoyer (tout passer en minuscules, filtrer la ponctuation tout en gardant les underscores du code, supprimer les mots vides ou trop courts).
+    #        * Compter combien de fois chaque mot apparaît dans ce chunk précis (le Term Frequency - TF).
+    #        * Sauvegarder un résumé allégé du chunk (chemin, positions, nombre total de mots nettoyés, et son TF).
 
-        # code de test
-        # return all_chunks
-        # code def
+    #    - Calculer la rareté globale de chaque mot dans tout le projet (le Document Frequency - DF : dans combien de chunks différents chaque mot apparaît).
+    #    - Calculer la taille moyenne de tous les chunks du projet (la fameuse moyenne 'avgdl' indispensable pour le futur calcul BM25).
+
+    # 6. ASSEMBLAGE ET PERSISTANCE :
+    #    - Regrouper dans un grand dictionnaire final :
+    #        * Les statistiques globales du corpus (nombre total de chunks, longueur moyenne).
+    #        * Le dictionnaire global des fréquences de documents (DF).
+    #        * La liste complète de tous les chunks avec leurs TF.
+    #    - Créer le dossier de destination si besoin et écrire ce dictionnaire proprement dans un fichier "index.json".
+
+    # 7. FIN :
+    #    - Renvoyer le nombre total de chunks indexés avec succès.
         return len(all_chunks)
