@@ -6,7 +6,7 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 14:01:19 by stephanie       #+#    #+#               #
-#  Updated: 2026/06/30 15:42:51 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/21 17:04:31 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module for discovering and loading the vLLM repository files."""
@@ -33,10 +33,11 @@ class CorpusVllmCompiler():
         """Discover and yield valid Python and Markdown files.
 
         Yields:
-            Iterator[Path]: Paths to valid .py and .md files.
+            Iterator[Path]: Paths to valid .py, .txt and .md files.
 
         Raises:
-            RagLoadError: If the repository path does not exist or is not a directory.
+            RagLoadError: If the repository path does not exist
+            or is not a directory.
         """
         if not self.raw_corpus_path.exists():
             raise RagLoadError(f"Repository path '{self.raw_corpus_path}' "
@@ -45,7 +46,10 @@ class CorpusVllmCompiler():
             raise RagLoadError(f"Repository path '{self.raw_corpus_path}' "
                                f"is not a directory.")
         for path in self.raw_corpus_path.rglob("*"):
-            if any(part.startswith(".") or part == "__pycache__" for part in path.parts):
+            if any(part.startswith(".")
+                   or part == "__pycache__" for part in path.parts):
                 continue
-            if path.is_file() and path.suffix.lower() in [".py", ".md"]:
+            if path.is_file() and path.suffix.lower() in [
+                ".py", ".md", ".txt"
+            ]:
                 yield path

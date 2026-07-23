@@ -6,7 +6,7 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 11:39:10 by stephanie       #+#    #+#               #
-#  Updated: 2026/06/30 11:59:39 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/21 17:11:32 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -20,9 +20,22 @@ from src.errors import RagLoadError, RagValidationError
 class Dataset_loader:
     def dataset_load(self, file_path: str) -> RagDataset:
         """
-        Loads a JSON dataset.
-        Handles cases: unsupported file type, missing file, permission
-        error, invalid JSON, empty file and invalid data structure.
+        Loads a JSON dataset into a RagDataset model.
+
+        Handles various error cases such as unsupported file type,
+        missing files, permission errors, and invalid data structures.
+
+        Args:
+            file_path (str): The path to the JSON dataset file.
+
+        Returns:
+            RagDataset: The validated dataset containing the questions.
+
+        Raises:
+            RagLoadError: If the file is missing, empty, or unreadable.
+            ValueError: If the file type is not .json.
+            RagValidationError: If the JSON structure does not match
+            the Pydantic models.
         """
         path = Path(file_path)
 
@@ -51,7 +64,7 @@ class Dataset_loader:
             dataset_dict = json.loads(content)
             ragdataset = RagDataset(**dataset_dict)
             return ragdataset
-        except json.JSONDecodeError(content) as e:
+        except json.JSONDecodeError as e:
             raise RagLoadError(f"Invalid JSON in '{path.name}."
                                f"Line {e.lineno}, {e.colno}.")
         except ValidationError as e:
