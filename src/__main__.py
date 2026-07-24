@@ -1,10 +1,12 @@
 import fire
+from tqdm import tqdm
 from functools import wraps
 from pathlib import Path
 from src.models import StudentSearchResults, StudentSearchResultsAndAnswer
 from src.utils.logger import logger
 from src.errors import RagCliArgumentError, RagError
 from src.codebase_indexer.indexer import DocIndexer
+from src.retriever import BM25Retriever
 
 
 def handle_cli_errors(function) -> callable:
@@ -75,12 +77,25 @@ class RAGCli():
 
     @handle_cli_errors
     def search(self, query: str, k: int):
-        # Return the top-k sources for a single query.
+        retriever = BM25Retriever()
         if not query:
             raise RagCliArgumentError("There is no query.")
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
-        return query
+
+        retrieved_chunks = retriever.search(query, k)
+
+        results = []
+
+        for chunk_data in retrieved_chunks:
+            file_path = chunk_data["file_path"]
+            start_index = chunk_data["first_character_index"]
+            end_index = chunk_data["last_character_index"]
+
+            display_result: str = f"{file_path} [{start_index}:{end_index}]"
+            results.append(display_result)
+
+        return "\n".join(results)
 
     @handle_cli_errors
     def search_dataset(

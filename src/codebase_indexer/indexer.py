@@ -6,16 +6,17 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/24 11:19:20 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/24 16:44:54 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import json
+from tqdm import tqdm
 from pathlib import Path
 from typing import List
 from src.codebase_indexer.ingestion import CorpusVllmCompiler
 from src.codebase_indexer.chunker import MdChunker, PyChunker, TxtChunker
-from src.codebase_indexer.tokenizer import Tokenizer
+from src.tokenizer import Tokenizer
 from src.errors import RagLoadError
 from src.models import MinimalSource
 
@@ -27,7 +28,7 @@ class DocIndexer:
     # code de test
     # def build_and_save_index(self) -> List[MinimalSource]:
     # code def
-    def build_and_save_index(self) -> int:
+    def build_and_save_index(self) -> None:
 
         input_dir = Path("data/raw")
 
@@ -49,7 +50,7 @@ class DocIndexer:
 
         all_chunks: list[MinimalSource] = []
 
-        for file_path in files_to_process:
+        for file_path in tqdm(files_to_process, desc="Chunking", unit="file"):
             with open(file_path, mode="r", encoding="utf-8") as file:
                 raw_content = file.read()
 
@@ -73,23 +74,27 @@ class DocIndexer:
 
         tokenizer = Tokenizer()
 
-        #    - Créer une liste vide pour stocker les fréquences de termes et une liste pour les chunks nettoyés.
+        #    - Créer une liste vide pour stocker les fréquences de termes et
+        # une liste pour les chunks nettoyés.
         allterms_frequency: list[dict[str, int]] = []
         clean_chunks: list[str] = []
         all_chunks_data = []
         total_len_chunks = 0
 
-        for chunk in all_chunks:
+        for chunk in tqdm(all_chunks, desc="Tokenizing", unit="chunk"):
             file_path = chunk.file_path
             start_index = chunk.first_character_index
             end_index = chunk.last_character_index
 
-            len_chunk = len(chunk)
+            len_chunk = end_index - start_index
             total_len_chunks += len_chunk
 
             with open(file_path, mode="r", encoding="utf-8") as f:
                 f.seek(start_index)
                 chunk_raw_text = f.read(end_index - start_index)
+
+                text_to_tokenize = f"{file_path} {chunk_raw_text}"
+
                 chunk_clean_text = tokenizer.normalize_and_clean_raw_text(
                     chunk_raw_text)
 
@@ -100,6 +105,9 @@ class DocIndexer:
                         chunk_clean_text))
 
                 allterms_frequency.append(tf_in_one_chunk)
+
+                clean_tokens_count = len(chunk_clean_text)
+                total_len_chunks += clean_tokens_count
 
                 chunk_data: dict[str, str | int | dict[str, int]] = {}
                 chunk_data["file_path"] = chunk.file_path
@@ -126,11 +134,13 @@ class DocIndexer:
         general_chunks_dict["chunks_number"] = len(all_chunks)
         general_chunks_dict["avg_len_chunks"] = avg_len_chunks
         general_chunks_dict["document_frequency"] = document_frequency
-        general_chunks_dict["chunks_number"] = len(all_chunks)
         general_chunks_dict["all_chunks_data"] = all_chunks_data
 
-        with open(
-                "data/processed/index.JSON", mode="w", encoding="utf-8") as f:
-            json.dump(general_chunks_dict,)
+        output_path = Path("data/processed/index.json")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        return len(all_chunks, f, ensure_ascii=False, indent=4)
+        with open(output_path, mode="w", encoding="utf-8") as f:
+            json.dump(general_chunks_dict, f, ensure_ascii=False, indent=4)
+
+        print(f"Ingestion complete! "
+              f"Indexed {len(all_chunks)} chunks under data/processed/")

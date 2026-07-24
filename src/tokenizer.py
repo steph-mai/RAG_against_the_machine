@@ -20,11 +20,28 @@ class Tokenizer():
 
     def __init__(self):
         """Initialize the tokenizer with a set of stop words."""
-        self.stop_words: set[str] = {
-            "the", "a", "an", "and", "or", "but", "if", "then", "else",
-            "for", "in", "is", "are", "to", "of", "it", "on", "with", "as",
-            "this", "that", "by", "from", "at",
-            "def", "class", "self", "return", "import", "from", "pass"
+        self.stop_words = {
+            "how", "what", "why", "when", "where", "who", "whom", "which", "whose",
+
+            "is", "are", "am", "was", "were", "be", "been", "being",
+            "do", "does", "did", "have", "has", "had", "having",
+            "can", "could", "will", "would", "shall", "should", "may", "might", "must",
+
+            "i", "me", "my", "myself", "we", "our", "ours", "ourselves",
+            "you", "your", "yours", "yourself", "yourselves",
+            "he", "him", "his", "himself", "she", "her", "hers", "herself",
+            "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
+            "this", "that", "these", "those",
+
+            "a", "an", "the", "and", "but", "or", "if", "because", "as", "until", "while",
+
+            "of", "at", "by", "for", "with", "about", "against", "between",
+            "into", "through", "during", "before", "after", "above", "below",
+            "to", "from", "up", "down", "in", "out", "on", "off", "over", "under",
+
+            "again", "further", "then", "once", "here", "there", "all", "any",
+            "both", "each", "few", "more", "most", "other", "some", "such",
+            "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "just", "now"
         }
 
     def normalize_and_clean_raw_text(self, raw_text: str) -> List[str]:
