@@ -6,13 +6,16 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/23 17:18:37 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/24 11:19:20 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
+
+import json
 from pathlib import Path
 from typing import List
 from src.codebase_indexer.ingestion import CorpusVllmCompiler
 from src.codebase_indexer.chunker import MdChunker, PyChunker, TxtChunker
+from src.codebase_indexer.tokenizer import Tokenizer
 from src.errors import RagLoadError
 from src.models import MinimalSource
 
@@ -27,9 +30,6 @@ class DocIndexer:
     def build_and_save_index(self) -> int:
 
         input_dir = Path("data/raw")
-
-        compiler = CorpusVllmCompiler(input_dir)
-        files_to_process: List[Path] = compiler.compile_corpus()
 
         compiler = CorpusVllmCompiler(input_dir)
         files_to_process: List[Path] = compiler.compile_corpus()
@@ -71,24 +71,66 @@ class DocIndexer:
         if not all_chunks:
             raise RagLoadError(f"No chunk in directory: {input_dir}")
 
-    #     5. TOKENISATION ET PRÉPARATION DE L'INDEX (Le rôle du Tokenizer) :
-    #    - Créer une liste vide pour stocker les fréquences de termes et une liste pour les chunks nettoyés.
-    #    - Pour chaque chunk de notre liste globale :
-    #        * Extraire le texte brut.
-    #        * Le nettoyer (tout passer en minuscules, filtrer la ponctuation tout en gardant les underscores du code, supprimer les mots vides ou trop courts).
-    #        * Compter combien de fois chaque mot apparaît dans ce chunk précis (le Term Frequency - TF).
-    #        * Sauvegarder un résumé allégé du chunk (chemin, positions, nombre total de mots nettoyés, et son TF).
+        tokenizer = Tokenizer()
 
-    #    - Calculer la rareté globale de chaque mot dans tout le projet (le Document Frequency - DF : dans combien de chunks différents chaque mot apparaît).
-    #    - Calculer la taille moyenne de tous les chunks du projet (la fameuse moyenne 'avgdl' indispensable pour le futur calcul BM25).
+        #    - Créer une liste vide pour stocker les fréquences de termes et une liste pour les chunks nettoyés.
+        allterms_frequency: list[dict[str, int]] = []
+        clean_chunks: list[str] = []
+        all_chunks_data = []
+        total_len_chunks = 0
+
+        for chunk in all_chunks:
+            file_path = chunk.file_path
+            start_index = chunk.first_character_index
+            end_index = chunk.last_character_index
+
+            len_chunk = len(chunk)
+            total_len_chunks += len_chunk
+
+            with open(file_path, mode="r", encoding="utf-8") as f:
+                f.seek(start_index)
+                chunk_raw_text = f.read(end_index - start_index)
+                chunk_clean_text = tokenizer.normalize_and_clean_raw_text(
+                    chunk_raw_text)
+
+                clean_chunks.append(chunk_clean_text)
+
+                tf_in_one_chunk: dict[str, int] = (
+                    tokenizer.get_terms_frequency_in_one_chunk(
+                        chunk_clean_text))
+
+                allterms_frequency.append(tf_in_one_chunk)
+
+                chunk_data: dict[str, str | int | dict[str, int]] = {}
+                chunk_data["file_path"] = chunk.file_path
+                chunk_data["first_character_index"] = start_index
+                chunk_data["last_character_index"] = end_index
+                chunk_data["clean_tokens_number"] = len(chunk_clean_text)
+                chunk_data["term_frequency"] = tf_in_one_chunk
+
+            all_chunks_data.append(chunk_data)
+
+        document_frequency = tokenizer.get_document_frequency(
+            allterms_frequency)
+        # Calculer la rareté globale de chaque mot dans tout le projet
+        # (le Document Frequency - DF : dans combien de chunks différents
+        # chaque mot apparaît).
+
+        avg_len_chunks = total_len_chunks / len(all_chunks)
+        #    - Calculer la taille moyenne de tous les chunks du projet
+        # (la moyenne 'avgdl' indispensable pour le futur calcul BM25).
 
     # 6. ASSEMBLAGE ET PERSISTANCE :
-    #    - Regrouper dans un grand dictionnaire final :
-    #        * Les statistiques globales du corpus (nombre total de chunks, longueur moyenne).
-    #        * Le dictionnaire global des fréquences de documents (DF).
-    #        * La liste complète de tous les chunks avec leurs TF.
-    #    - Créer le dossier de destination si besoin et écrire ce dictionnaire proprement dans un fichier "index.json".
+        general_chunks_dict = {}
 
-    # 7. FIN :
-    #    - Renvoyer le nombre total de chunks indexés avec succès.
-        return len(all_chunks)
+        general_chunks_dict["chunks_number"] = len(all_chunks)
+        general_chunks_dict["avg_len_chunks"] = avg_len_chunks
+        general_chunks_dict["document_frequency"] = document_frequency
+        general_chunks_dict["chunks_number"] = len(all_chunks)
+        general_chunks_dict["all_chunks_data"] = all_chunks_data
+
+        with open(
+                "data/processed/index.JSON", mode="w", encoding="utf-8") as f:
+            json.dump(general_chunks_dict,)
+
+        return len(all_chunks, f, ensure_ascii=False, indent=4)
