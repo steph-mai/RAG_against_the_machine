@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  indexer.py                                        :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/24 16:44:54 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/27 09:14:29 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -26,7 +26,7 @@ class DocIndexer:
         self.max_chunk_size = max_chunk_size
 
     # code de test
-    # def build_and_save_index(self) -> List[MinimalSource]:
+    # def build_and_save_index(self) -> List[MinimalSource]
     # code def
     def build_and_save_index(self) -> None:
 

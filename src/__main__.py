@@ -4,9 +4,11 @@ from functools import wraps
 from pathlib import Path
 from src.models import StudentSearchResults, StudentSearchResultsAndAnswer
 from src.utils.logger import logger
+from src.search_data_set import SearchDataSet
 from src.errors import RagCliArgumentError, RagError
 from src.codebase_indexer.indexer import DocIndexer
-from src.retriever import BM25Retriever
+from src.retriever import BM25Retriever, TfIdfRetriever
+from src.evaluator import Evaluator
 
 
 def handle_cli_errors(function) -> callable:
@@ -76,8 +78,8 @@ class RAGCli():
         #     print("." * 40)
 
     @handle_cli_errors
-    def search(self, query: str, k: int):
-        retriever = BM25Retriever()
+    def search(self, query: str, k: int) -> str:
+        retriever = TfIdfRetriever()
         if not query:
             raise RagCliArgumentError("There is no query.")
         if k <= 0:
@@ -103,13 +105,11 @@ class RAGCli():
             ) -> StudentSearchResults:
         # Run search over a whole dataset and write a
         # StudentSearchResults JSON file.
-        if not dataset_path:
-            raise RagCliArgumentError("Give a valid dataset_path.")
-        if not save_directory:
-            raise RagCliArgumentError("Give a valid save_directory.")
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
-        return save_directory
+        searcher = SearchDataSet()
+        search_results = searcher.run(dataset_path, k, save_directory)
+        return search_results
 
     @handle_cli_errors
     def answer(self, query: str, k: int):
@@ -134,7 +134,7 @@ class RAGCli():
         return save_directory
 
     @handle_cli_errors
-    def evaluate(self, student_search_results_path: str, dataset_path: str):
+    def evaluate(self, student_search_results_path: str, dataset_path: str) -> float:
         # Report your own recall@k against a ground-truth dataset,
         # for your own testing
         if not student_search_results_path:
@@ -142,7 +142,10 @@ class RAGCli():
                 "Give a valid student_search_results_path.")
         if not dataset_path:
             raise RagCliArgumentError("Give a valid dataset_path.")
-        return dataset_path
+        evaluator = Evaluator()
+        evaluator.run(
+            student_search_results_path=student_search_results_path,
+            dataset_path=dataset_path)
 
 
 if __name__ == "__main__":
