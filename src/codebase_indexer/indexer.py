@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  indexer.py                                        :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
+#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/27 09:14:29 by stmaire         ###   ########.fr        #
+#  Updated: 2026/07/27 18:03:17 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -144,3 +144,5 @@ class DocIndexer:
 
         print(f"Ingestion complete! "
               f"Indexed {len(all_chunks)} chunks under data/processed/")
+
+        return output_path

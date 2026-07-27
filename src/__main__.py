@@ -1,8 +1,7 @@
 import fire
-from tqdm import tqdm
 from functools import wraps
 from pathlib import Path
-from src.models import StudentSearchResults, StudentSearchResultsAndAnswer
+
 from src.utils.logger import logger
 from src.search_data_set import SearchDataSet
 from src.errors import RagCliArgumentError, RagError
@@ -13,140 +12,102 @@ from src.evaluator import Evaluator
 
 def handle_cli_errors(function) -> callable:
     @wraps(function)
-    # permet de conserver les métadonnées de la function
     def wrapper(*args, **kwargs):
-        # création d'un "garde du corps qui accepte toutes les fonctions
         try:
             return function(*args, **kwargs)
-        # demande à  la fonction de s'exécuter
         except RagError as e:
             logger.error(e)
         except Exception as e:
             logger.error(f"[CRITICAL ERROR] Unexpected error: {e}")
-        # c'est lui qui récupère les erreurs.
     return wrapper
-    # on renvoie un garde du corps prêt à agir.
 
 
-class RAGCli():
+class RAGCli:
     @handle_cli_errors
-    def index(self, max_chunk_size: int = 2000) -> Path:
-        # Ingest data/raw/ and build the index under data/processed/.
+    def index(self, max_chunk_size: int = 2000) -> None:
+        """Ingest data/raw/ and build the index under data/processed/."""
         if max_chunk_size <= 0:
-            raise RagCliArgumentError(
-                "max_chunk_size must be a positive integer.")
-        # gerer le déroulé de l'indexation avec tqdm dans la classe Indexer
-        indexer = DocIndexer(max_chunk_size=2000)
-        index_path: Path = indexer.build_and_save_index()
-        return index_path
+            raise RagCliArgumentError("max_chunk_size must be a positive integer.")
 
-        # pour afficher le contenu des chunks en test
-        # indexer = DocIndexer()
-        # chunks = indexer.build_and_save_index()
-        # total_chunks = len(chunks)
+        # Attention : Il faut bien passer la variable max_chunk_size ici,
+        # pas la valeur codée en dur 2000 !
+        indexer = DocIndexer(max_chunk_size=max_chunk_size)
+        index_path = indexer.build_and_save_index()
 
-        # print(f"✅ Ingestion complete! Indexed {total_chunks} chunks under data/processed/")
-
-        # # ==========================================
-        # # 2. AFFICHAGE DE L'ÉCHANTILLON (Les 3 premiers)
-        # # ==========================================
-        # print("\n" + "="*60)
-        # print("🔍 ÉCHANTILLON DES 3 PREMIERS CHUNKS")
-        # print("="*60)
-
-        # # On boucle uniquement sur les 3 premiers éléments (chunks[:3])
-        # for i, source in enumerate(chunks[:3], 1):
-        #     # Comme MinimalSource ne contient que les index, il faut rouvrir le fichier
-        #     with open(source.file_path, "r", encoding="utf-8") as f:
-        #         full_content = f.read()
-
-        #     # On découpe exactement le texte du chunk avec les index
-        #     chunk_text = full_content[source.first_character_index : source.last_character_index]
-
-        #     print(f"\n📦 CHUNK N°{i}/{total_chunks} | Fichier : {source.file_path}")
-        #     print(f"   Index : [{source.first_character_index} -> {source.last_character_index}]")
-        #     print(f"   Taille : {len(chunk_text)} caractères")
-        #     print("." * 40)
-
-        #     # On affiche un aperçu (les 5 premières lignes max)
-        #     lines = chunk_text.splitlines()
-        #     for line in lines[:5]:
-        #         print(f"   | {line}")
-
-        #     if len(lines) > 5:
-        #         print("   | [... reste du contenu masqué ...]")
-        #     print("." * 40)
+        # Le sujet attend ce type d'affichage
+        print(f"Ingestion complete! Indices saved under {index_path.parent}/")
 
     @handle_cli_errors
     def search(self, query: str, k: int) -> str:
-        retriever = TfIdfRetriever()
+        """Return the top-k sources for a single query."""
         if not query:
             raise RagCliArgumentError("There is no query.")
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
 
+        retriever = BM25Retriever() # ou BM25Retriever()
         retrieved_chunks = retriever.search(query, k)
 
         results = []
-
         for chunk_data in retrieved_chunks:
             file_path = chunk_data["file_path"]
             start_index = chunk_data["first_character_index"]
             end_index = chunk_data["last_character_index"]
+            results.append(f"{file_path} [{start_index}:{end_index}]")
 
-            display_result: str = f"{file_path} [{start_index}:{end_index}]"
-            results.append(display_result)
-
+        # Fire affichera cette chaîne renvoyée proprement dans le terminal
         return "\n".join(results)
 
     @handle_cli_errors
-    def search_dataset(
-            self, dataset_path: str, k: int, save_directory: str
-            ) -> StudentSearchResults:
-        # Run search over a whole dataset and write a
-        # StudentSearchResults JSON file.
+    def search_dataset(self, dataset_path: str, k: int, save_directory: str) -> None:
+        """Run search over a whole dataset and write a StudentSearchResults JSON file."""
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
+
         searcher = SearchDataSet()
-        search_results = searcher.run(dataset_path, k, save_directory)
-        return search_results
+        output_file = searcher.run(dataset_path, k, save_directory)
+
+        # Message exact attendu par le sujet
+        print(f"Saved student_search_results to {output_file}")
 
     @handle_cli_errors
     def answer(self, query: str, k: int):
-        # Answer a single query using the retrieved context.
+        """Answer a single query using the retrieved context."""
         if not query:
             raise RagCliArgumentError("There is no query.")
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
-        return k
+
+        # Logique à implémenter plus tard avec le LLM
+        pass
 
     @handle_cli_errors
-    def answer_dataset(
-            self, student_search_results_path: str, save_directory: str
-            ) -> StudentSearchResultsAndAnswer:
-        # Generate answers for a dataset, producing a
-        # StudentSearchResultsAndAnswer JSON file.
+    def answer_dataset(self, student_search_results_path: str, save_directory: str) -> None:
+        """Generate answers for a dataset, producing a StudentSearchResultsAndAnswer JSON file."""
         if not student_search_results_path:
-            raise RagCliArgumentError(
-                "Give a valid student_search_results_path.")
+            raise RagCliArgumentError("Give a valid student_search_results_path.")
         if not save_directory:
             raise RagCliArgumentError("Give a valid save_directory.")
-        return save_directory
+
+        # Logique à implémenter plus tard...
+        # A la fin de ton traitement, tu devras print :
+        # print(f"Saved student_search_results_and_answer to {output_file}")
 
     @handle_cli_errors
-    def evaluate(self, student_search_results_path: str, dataset_path: str) -> float:
-        # Report your own recall@k against a ground-truth dataset,
-        # for your own testing
+    def evaluate(self, student_search_results_path: str, dataset_path: str) -> None:
+        """Report your own recall@k against a ground-truth dataset."""
         if not student_search_results_path:
-            raise RagCliArgumentError(
-                "Give a valid student_search_results_path.")
+            raise RagCliArgumentError("Give a valid student_search_results_path.")
         if not dataset_path:
             raise RagCliArgumentError("Give a valid dataset_path.")
+
         evaluator = Evaluator()
         evaluator.run(
             student_search_results_path=student_search_results_path,
-            dataset_path=dataset_path)
+            dataset_path=dataset_path
+        )
 
 
 if __name__ == "__main__":
+    # Invoque la CLI avec python-fire
     fire.Fire(RAGCli)

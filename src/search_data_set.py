@@ -2,7 +2,7 @@ from tqdm import tqdm
 import json
 from src.models import StudentSearchResults, MinimalSource, MinimalSearchResults
 from src.dataset_loader import Dataset_loader
-from src.retriever import BM25Retriever
+from src.retriever import BM25Retriever, TfIdfRetriever
 from pathlib import Path
 from src.errors import RagCliArgumentError
 
@@ -25,7 +25,7 @@ class SearchDataSet:
                 f"Failed to create directory "
                 f"at {save_directory}. Details: {e}")
 
-        retriever = BM25Retriever()
+        retriever = TfIdfRetriever()
         all_minimal_search_results = []
 
         for rag_question in tqdm(
@@ -61,8 +61,10 @@ class SearchDataSet:
         final_results = StudentSearchResults(
             search_results=all_minimal_search_results, k=k)
 
-        output_file = output_dir/"student_search_results.json"
+        dataset_name = Path(dataset_path).name
+        output_file = output_dir / dataset_name
 
         with open(file=output_file, mode="w", encoding="utf-8") as f:
             json.dump(
                 final_results.model_dump(), f, ensure_ascii=False, indent=4)
+        return output_file
