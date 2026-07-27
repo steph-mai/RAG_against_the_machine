@@ -3,16 +3,16 @@
 #                                                      :::      ::::::::    #
 #  chunker.py                                        :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/01 09:37:31 by stmaire         #+#    #+#               #
-#  Updated: 2026/07/21 17:19:42 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/27 09:11:58 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining the chunking strategies for different file types."""
 from abc import abstractmethod, ABC
 from src.models import MinimalSource
-from typing import Iterator
+from typing import List
 
 
 class Chunker(ABC):
@@ -23,34 +23,36 @@ class Chunker(ABC):
             content: str,
             file_path: str,
             max_size: int,
-            ) -> Iterator[MinimalSource]:
-        """Abstract method to split content into chunks.
+            ) -> List[MinimalSource]:
+        """Base method to split content into chunks.
 
         Args:
             content (str): The raw text content of the file.
             file_path (str): The relative path of the file.
             max_size (int): The maximum character size for each chunk.
 
-        Yields:
-            Iterator[MinimalSource]: An iterator of type-safe chunk metadata.
+        Returns:
+            List[MinimalSource]: A list of type-safe chunk metadata.
         """
 
-        overlap = max_size // 10
-        lines = content.splitlines(keepends=True)
+        chunks_list: List[MinimalSource] = []
 
-        start_index = 0
-        current_chunk_length = 0
+        overlap: int = max_size // 10
+        lines: str = content.splitlines(keepends=True)
+
+        start_index: int = 0
+        current_chunk_length: int = 0
 
         state = self._init_state()
 
-        def yield_and_clear_buffer() -> Iterator[MinimalSource]:
+        def append_and_clear_buffer() -> None:
             nonlocal current_chunk_length, start_index
             if current_chunk_length > 0:
-                yield MinimalSource(
+                chunks_list.append(MinimalSource(
                     file_path=file_path,
                     first_character_index=start_index,
                     last_character_index=start_index + current_chunk_length
-                )
+                ))
                 start_index += current_chunk_length
                 current_chunk_length = 0
 
@@ -58,38 +60,40 @@ class Chunker(ABC):
             line_length = len(line)
 
             if line_length > max_size:
-                yield from yield_and_clear_buffer()
+                append_and_clear_buffer()
 
                 for index in range(0, line_length, max_size):
                     line_slice = line[index:index + max_size]
-                    yield MinimalSource(
+                    chunks_list.append(MinimalSource(
                         file_path=file_path,
                         first_character_index=start_index + index,
                         last_character_index=start_index + index + len(
                             line_slice)
-                    )
+                    ))
                 start_index += line_length
                 continue
 
             if self._should_cut(line, current_chunk_length, max_size, state):
-                yield from yield_and_clear_buffer()
+                append_and_clear_buffer()
 
             if current_chunk_length + line_length > max_size:
                 if current_chunk_length > 0:
-                    yield MinimalSource(
+                    chunks_list.append(MinimalSource(
                         file_path=file_path,
                         first_character_index=start_index,
                         last_character_index=start_index + current_chunk_length
-                    )
+                    ))
                     actual_overlap = min(overlap, current_chunk_length)
                     start_index += current_chunk_length - actual_overlap
                     current_chunk_length = actual_overlap
                 else:
-                    yield from yield_and_clear_buffer()
+                    append_and_clear_buffer()
 
             current_chunk_length += line_length
 
-        yield from yield_and_clear_buffer()
+        append_and_clear_buffer()
+
+        return chunks_list
 
     def _init_state(self) -> dict[str | None, bool | None]:
         state = {}
@@ -107,14 +111,21 @@ class Chunker(ABC):
 
 
 class TxtChunker(Chunker):
+
+    MIN_FILL_TO_CUT_IF_EMPTY_LINE = 0.5
+
     def _should_cut(
         self, line: str, current_chunk_length: int,
         max_size: int, state: dict | None
     ) -> bool:
-        return not line.strip() and current_chunk_length > 0.5 * max_size
+        return not line.strip() and current_chunk_length > (
+                self.MIN_FILL_TO_CUT_IF_EMPTY_LINE * max_size)
 
 
 class PyChunker(Chunker):
+
+    MIN_FILL_TO_CUT_IF_BOUNDARY = 0.35
+
     def _init_state(self):
         return {"is_in_decorator_block": False}
 
@@ -126,6 +137,7 @@ class PyChunker(Chunker):
         stripped_line = line.lstrip()
         indentation = len(line) - len(stripped_line)
         should_cut = False
+        min_threshold = max_size * self.MIN_FILL_TO_CUT_IF_BOUNDARY
         is_boundary = stripped_line.startswith((
                 "if TYPE_CHECKING:",
                 "__all__", "if __name__"
@@ -133,23 +145,32 @@ class PyChunker(Chunker):
 
         if indentation == 0:
             if stripped_line.startswith(("def ", "class ", "async def ")):
-                if not state["is_in_decorator_block"]:
+                if not state["is_in_decorator_block"] and (
+                        current_chunk_length > min_threshold):
                     should_cut = True
                 state["is_in_decorator_block"] = False
 
             elif stripped_line.startswith("@"):
-                if not state["is_in_decorator_block"]:
+                if not state["is_in_decorator_block"] and (
+                        current_chunk_length > min_threshold):
                     should_cut = True
                 state["is_in_decorator_block"] = True
 
             elif is_boundary:
-                if not state["is_in_decorator_block"]:
+                if not state["is_in_decorator_block"] and (
+                        current_chunk_length > min_threshold):
                     should_cut = True
                 state["is_in_decorator_block"] = False
         return should_cut
 
 
 class MdChunker(Chunker):
+
+    MIN_THRESHOLD_TO_CUT_IF_H1 = 0.1
+    MIN_THRESHOLD_TO_CUT_IF_H2 = 0.7
+    # MIN_THRESHOLD_TO_CUT_IF_LINK = 0.95
+    MIN_THRESHOLD_TO_CUT_IF_EMPTY_LINE = 0.9
+
     def _init_state(self):
         return {"is_in_code_block": False}
 
@@ -165,24 +186,21 @@ class MdChunker(Chunker):
             return False
         if state["is_in_code_block"]:
             return False
-        if stripped_line.startswith("# ") and current_chunk_length > 0:
+        if stripped_line.startswith(
+                "# ") and current_chunk_length > int(
+                    max_size * self.MIN_THRESHOLD_TO_CUT_IF_H1):
             return True
         if stripped_line.startswith(("## ", "!!! ")) and (
-                current_chunk_length > int(max_size * 0.7)):
+                current_chunk_length > int(
+                    max_size * self.MIN_THRESHOLD_TO_CUT_IF_H2)):
             return True
-        if stripped_line.startswith("[](){") and (
-                current_chunk_length > int(max_size * 0.95)):
-            return True
+        # if stripped_line.startswith(("[", "]", "(", ")", "{", "}")) and (
+        #         current_chunk_length > int(
+        #             max_size * self.MIN_THRESHOLD_TO_CUT_IF_LINK)):
+        #     return True
 
-        # is_major_boundary = stripped_line.startswith((
-        #         "# ", "## ", "### ",
-        #         "!!! ", "??? ",
-        #         "[](){"
-        #     ))
-        # if is_major_boundary:
-        #     if current_chunk_length > min(80, max_size // 20):
-        #         return True
-        if not stripped_line and current_chunk_length > 0.9 * max_size:
+        if not stripped_line and current_chunk_length > int(
+                self.MIN_THRESHOLD_TO_CUT_IF_EMPTY_LINE * max_size):
             return True
         return False
 

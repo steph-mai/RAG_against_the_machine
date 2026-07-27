@@ -1,10 +1,14 @@
 import fire
+from tqdm import tqdm
 from functools import wraps
 from pathlib import Path
 from src.models import StudentSearchResults, StudentSearchResultsAndAnswer
 from src.utils.logger import logger
+from src.search_data_set import SearchDataSet
 from src.errors import RagCliArgumentError, RagError
-from src.indexer import DocIndexer
+from src.codebase_indexer.indexer import DocIndexer
+from src.retriever import BM25Retriever, TfIdfRetriever
+from src.evaluator import Evaluator
 
 
 def handle_cli_errors(function) -> callable:
@@ -36,14 +40,64 @@ class RAGCli():
         index_path: Path = indexer.build_and_save_index()
         return index_path
 
+        # pour afficher le contenu des chunks en test
+        # indexer = DocIndexer()
+        # chunks = indexer.build_and_save_index()
+        # total_chunks = len(chunks)
+
+        # print(f"✅ Ingestion complete! Indexed {total_chunks} chunks under data/processed/")
+
+        # # ==========================================
+        # # 2. AFFICHAGE DE L'ÉCHANTILLON (Les 3 premiers)
+        # # ==========================================
+        # print("\n" + "="*60)
+        # print("🔍 ÉCHANTILLON DES 3 PREMIERS CHUNKS")
+        # print("="*60)
+
+        # # On boucle uniquement sur les 3 premiers éléments (chunks[:3])
+        # for i, source in enumerate(chunks[:3], 1):
+        #     # Comme MinimalSource ne contient que les index, il faut rouvrir le fichier
+        #     with open(source.file_path, "r", encoding="utf-8") as f:
+        #         full_content = f.read()
+
+        #     # On découpe exactement le texte du chunk avec les index
+        #     chunk_text = full_content[source.first_character_index : source.last_character_index]
+
+        #     print(f"\n📦 CHUNK N°{i}/{total_chunks} | Fichier : {source.file_path}")
+        #     print(f"   Index : [{source.first_character_index} -> {source.last_character_index}]")
+        #     print(f"   Taille : {len(chunk_text)} caractères")
+        #     print("." * 40)
+
+        #     # On affiche un aperçu (les 5 premières lignes max)
+        #     lines = chunk_text.splitlines()
+        #     for line in lines[:5]:
+        #         print(f"   | {line}")
+
+        #     if len(lines) > 5:
+        #         print("   | [... reste du contenu masqué ...]")
+        #     print("." * 40)
+
     @handle_cli_errors
-    def search(self, query: str, k: int):
-        # Return the top-k sources for a single query.
+    def search(self, query: str, k: int) -> str:
+        retriever = TfIdfRetriever()
         if not query:
             raise RagCliArgumentError("There is no query.")
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
-        return query
+
+        retrieved_chunks = retriever.search(query, k)
+
+        results = []
+
+        for chunk_data in retrieved_chunks:
+            file_path = chunk_data["file_path"]
+            start_index = chunk_data["first_character_index"]
+            end_index = chunk_data["last_character_index"]
+
+            display_result: str = f"{file_path} [{start_index}:{end_index}]"
+            results.append(display_result)
+
+        return "\n".join(results)
 
     @handle_cli_errors
     def search_dataset(
@@ -51,13 +105,11 @@ class RAGCli():
             ) -> StudentSearchResults:
         # Run search over a whole dataset and write a
         # StudentSearchResults JSON file.
-        if not dataset_path:
-            raise RagCliArgumentError("Give a valid dataset_path.")
-        if not save_directory:
-            raise RagCliArgumentError("Give a valid save_directory.")
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
-        return save_directory
+        searcher = SearchDataSet()
+        search_results = searcher.run(dataset_path, k, save_directory)
+        return search_results
 
     @handle_cli_errors
     def answer(self, query: str, k: int):
@@ -82,7 +134,7 @@ class RAGCli():
         return save_directory
 
     @handle_cli_errors
-    def evaluate(self, student_search_results_path: str, dataset_path: str):
+    def evaluate(self, student_search_results_path: str, dataset_path: str) -> float:
         # Report your own recall@k against a ground-truth dataset,
         # for your own testing
         if not student_search_results_path:
@@ -90,7 +142,10 @@ class RAGCli():
                 "Give a valid student_search_results_path.")
         if not dataset_path:
             raise RagCliArgumentError("Give a valid dataset_path.")
-        return dataset_path
+        evaluator = Evaluator()
+        evaluator.run(
+            student_search_results_path=student_search_results_path,
+            dataset_path=dataset_path)
 
 
 if __name__ == "__main__":
