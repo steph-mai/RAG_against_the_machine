@@ -6,7 +6,7 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/28 17:26:58 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/28 17:35:53 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -87,8 +87,8 @@ class DocIndexer:
             end_index = chunk.last_character_index
 
             with open(file_path, mode="r", encoding="utf-8") as f:
-                f.seek(start_index)
-                chunk_raw_text = f.read(end_index - start_index)
+                full_text = f.read()
+                chunk_raw_text = full_text[start_index:end_index]
 
                 file_name = Path(file_path).name
                 text_to_tokenize = f"{file_name} {chunk_raw_text}"

@@ -44,34 +44,67 @@ class Tokenizer():
             "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "just", "now"
         }
 
+    # def normalize_and_clean_raw_text(self, raw_text: str) -> List[str]:
+    #     """Normalize and clean raw text into tokens.
+
+    #     Text is converted to lower case, non-alphanumeric characters
+    #     are replaced with spaces, and stop words and short tokens
+    #     are removed.
+
+    #     Args:
+    #         raw_text: The raw text to normalize.
+
+    #     Returns:
+    #         A list of cleaned tokens.
+    #     """
+    #     if not raw_text:
+    #         return []
+    #     clean_tokens = []
+
+    #     lower_text = raw_text.lower()
+    #     cleaned_text = re.sub(r'[^a-z0-9_]', ' ', lower_text)
+    #     tokens = cleaned_text.split()
+
+    #     for token in tokens:
+    #         if token in self.stop_words:
+    #             continue
+    #         if len(token) <= 2:
+    #             continue
+    #         else:
+    #             clean_tokens.append(token)
+    #     return clean_tokens
+
     def normalize_and_clean_raw_text(self, raw_text: str) -> List[str]:
-        """Normalize and clean raw text into tokens.
-
-        Text is converted to lower case, non-alphanumeric characters
-        are replaced with spaces, and stop words and short tokens
-        are removed.
-
-        Args:
-            raw_text: The raw text to normalize.
-
-        Returns:
-            A list of cleaned tokens.
-        """
+        """Normalize and clean raw text into tokens (Code-Aware)."""
         if not raw_text:
             return []
-        clean_tokens = []
 
-        lower_text = raw_text.lower()
-        cleaned_text = re.sub(r'[^a-z0-9_]', ' ', lower_text)
-        tokens = cleaned_text.split()
+        # 1. Traitement du CamelCase (ex: "AsyncLLMEngine" -> "Async LLMEngine")
+        # Coupe entre une minuscule et une majuscule
+        text = re.sub(r'([a-z])([A-Z])', r'\1 \2', raw_text)
+
+        # Coupe entre une suite de majuscules et le reste (ex: "HTTPResponse" -> "HTTP Response")
+        text = re.sub(r'([A-Z])([A-Z][a-z])', r'\1 \2', text)
+
+        # 2. Remplacer TOUT ce qui n'est pas alphanumérique par un espace
+        # Cela casse automatiquement le snake_case: "get_model_config" -> "get model config"
+        cleaned_text = re.sub(r'[^a-zA-Z0-9]', ' ', text)
+
+        # 3. Passage en minuscules
+        lower_text = cleaned_text.lower()
+
+        # 4. Découpage et filtrage (inchangé)
+        tokens = lower_text.split()
+        clean_tokens = []
 
         for token in tokens:
             if token in self.stop_words:
                 continue
-            if len(token) <= 2:
+            if len(token) <= 2:  # On garde les mots de plus de 2 lettres
                 continue
             else:
                 clean_tokens.append(token)
+
         return clean_tokens
 
     def get_terms_frequency_in_one_chunk(
