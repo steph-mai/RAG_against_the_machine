@@ -152,18 +152,39 @@ class TfIdfRetriever():
                 if query_token not in term_frequency_dict:
                     continue
 
-                # 1. Calcul du TF (Term Frequency) normalisé
                 term_frequency_in_chunk = term_frequency_dict[query_token]
-                tf = term_frequency_in_chunk / tokens_number
 
-                # 2. Calcul de l'IDF (Inverse Document Frequency) standard
+                # 1. Calcul du TF Logarithmique (beaucoup plus efficace que la division basique)
+                # On fait 1 + log(tf) pour que :
+                # - tf=1 -> 1
+                # - tf=2 -> 1.30
+                # - tf=10 -> 2.0
+                # Ça évite qu'un mot répété 10 fois n'écrase totalement le score.
+                tf = 1.0 + math.log10(term_frequency_in_chunk)
+
+                # 2. Calcul de l'IDF standard
                 chunk_count_containing_token = doc_frequency_dict.get(query_token, 0)
-
-                # Formule classique TF-IDF avec lissage (smooth IDF)
                 idf = math.log((chunks_number + 1) / (chunk_count_containing_token + 1)) + 1.0
 
-                # 3. Score final TF-IDF pour ce mot
+                # 3. Score final
                 score += tf * idf
+
+            # for query_token in clean_query_tokens:
+            #     if query_token not in term_frequency_dict:
+            #         continue
+
+            #     # 1. Calcul du TF (Term Frequency) normalisé
+            #     term_frequency_in_chunk = term_frequency_dict[query_token]
+            #     tf = term_frequency_in_chunk / tokens_number
+
+            #     # 2. Calcul de l'IDF (Inverse Document Frequency) standard
+            #     chunk_count_containing_token = doc_frequency_dict.get(query_token, 0)
+
+            #     # Formule classique TF-IDF avec lissage (smooth IDF)
+            #     idf = math.log((chunks_number + 1) / (chunk_count_containing_token + 1)) + 1.0
+
+            #     # 3. Score final TF-IDF pour ce mot
+            #     score += tf * idf
 
             scores[i] = score
 
