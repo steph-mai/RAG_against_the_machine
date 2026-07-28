@@ -40,7 +40,8 @@ class BM25Retriever():
         # pas multiplié par 10, il s'arrête de croître pour éviter qu'un mot
         # répété domine tout).
         k1 = 1.2
-        b = 0.75
+        b = 0.4
+        # 0.79 avec le code, 0.86 avec les docs
 
         chunks_number = self.index["chunks_number"]
         avg_len = self.index["avg_len_chunks"]
