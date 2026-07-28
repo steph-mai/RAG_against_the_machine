@@ -25,7 +25,7 @@ class SearchDataSet:
                 f"Failed to create directory "
                 f"at {save_directory}. Details: {e}")
 
-        retriever = TfIdfRetriever()
+        retriever = BM25Retriever()
         all_minimal_search_results = []
 
         for rag_question in tqdm(

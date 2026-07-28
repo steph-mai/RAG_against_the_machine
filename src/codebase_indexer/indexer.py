@@ -6,7 +6,7 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/28 15:57:49 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/28 17:26:58 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -86,17 +86,14 @@ class DocIndexer:
             start_index = chunk.first_character_index
             end_index = chunk.last_character_index
 
-            len_chunk = end_index - start_index
-            total_len_chunks += len_chunk
-
             with open(file_path, mode="r", encoding="utf-8") as f:
                 f.seek(start_index)
                 chunk_raw_text = f.read(end_index - start_index)
 
-                text_to_tokenize = f"{file_path} {chunk_raw_text}"
+                file_name = Path(file_path).name
+                text_to_tokenize = f"{file_name} {chunk_raw_text}"
 
-                chunk_clean_text = tokenizer.normalize_and_clean_raw_text(
-                    text_to_tokenize)
+                chunk_clean_text = tokenizer.normalize_and_clean_raw_text(text_to_tokenize)
 
                 clean_chunks.append(chunk_clean_text)
 
