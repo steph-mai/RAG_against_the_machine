@@ -6,7 +6,7 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/27 18:03:17 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/28 15:57:49 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -96,7 +96,7 @@ class DocIndexer:
                 text_to_tokenize = f"{file_path} {chunk_raw_text}"
 
                 chunk_clean_text = tokenizer.normalize_and_clean_raw_text(
-                    chunk_raw_text)
+                    text_to_tokenize)
 
                 clean_chunks.append(chunk_clean_text)
 
