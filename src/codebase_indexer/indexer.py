@@ -6,11 +6,12 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/28 17:35:53 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/28 18:04:37 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import json
+import re
 from tqdm import tqdm
 from pathlib import Path
 from typing import List
@@ -86,13 +87,44 @@ class DocIndexer:
             start_index = chunk.first_character_index
             end_index = chunk.last_character_index
 
+            # with open(file_path, mode="r", encoding="utf-8") as f:
+            #     full_text = f.read()
+            #     chunk_raw_text = full_text[start_index:end_index]
+
+            #     file_name = Path(file_path).name
+            #     text_to_tokenize = f"{file_name} {chunk_raw_text}"
+
+            #     chunk_clean_text = tokenizer.normalize_and_clean_raw_text(text_to_tokenize)
+
             with open(file_path, mode="r", encoding="utf-8") as f:
+                # On lit tout le fichier proprement
                 full_text = f.read()
+                # On isole notre chunk
                 chunk_raw_text = full_text[start_index:end_index]
 
-                file_name = Path(file_path).name
-                text_to_tokenize = f"{file_name} {chunk_raw_text}"
+                if Path(file_path).suffix == ".py":
+                    # 1. Le nom du fichier (qui t'a fait gagner plein de points)
+                    file_name = Path(file_path).name
 
+                    # héritage de contexte
+                    # On regarde tout le texte situé AVANT notre chunk
+                    text_before = full_text[:start_index]
+                    context_words = []
+
+                    # On cherche la dernière classe définie avant notre chunk
+                    # re.MULTILINE permet au '^' de matcher le début de chaque ligne
+                    last_class_match = re.findall(r'^class\s+([A-Za-z0-9_]+)', text_before, re.MULTILINE)
+                    if last_class_match:
+                        # On récupère la TOUTE DERNIÈRE classe trouvée [-1]
+                        context_words.append(last_class_match[-1])
+
+                    # On assemble le tout : NomFichier + NomClasse + Code du chunk
+                    context_string = " ".join(context_words)
+                    text_to_tokenize = f"{file_name} {context_string} {chunk_raw_text}"
+                else:
+                    text_to_tokenize = chunk_raw_text
+
+                # On envoie cette chaîne enrichie à ton tokenizer (qui va bien séparer le CamelCase !)
                 chunk_clean_text = tokenizer.normalize_and_clean_raw_text(text_to_tokenize)
 
                 clean_chunks.append(chunk_clean_text)

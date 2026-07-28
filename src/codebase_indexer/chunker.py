@@ -6,7 +6,7 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/01 09:37:31 by stmaire         #+#    #+#               #
-#  Updated: 2026/07/28 17:30:49 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/28 18:19:24 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining the chunking strategies for different file types."""
@@ -122,51 +122,9 @@ class TxtChunker(Chunker):
                 self.MIN_FILL_TO_CUT_IF_EMPTY_LINE * max_size)
 
 
-# class PyChunker(Chunker):
-
-#     MIN_FILL_TO_CUT_IF_BOUNDARY = 0.35
-
-#     def _init_state(self):
-#         return {"is_in_decorator_block": False}
-
-#     def _should_cut(
-#         self, line: str, current_chunk_length: int,
-#         max_size: int, state: dict | None
-#     ) -> bool:
-
-#         stripped_line = line.lstrip()
-#         indentation = len(line) - len(stripped_line)
-#         should_cut = False
-#         min_threshold = max_size * self.MIN_FILL_TO_CUT_IF_BOUNDARY
-#         is_boundary = stripped_line.startswith((
-#                 "if TYPE_CHECKING:",
-#                 "__all__", "if __name__"
-#             ))
-
-#         if indentation == 0:
-#             if stripped_line.startswith(("def ", "class ", "async def ")):
-#                 if not state["is_in_decorator_block"] and (
-#                         current_chunk_length > min_threshold):
-#                     should_cut = True
-#                 state["is_in_decorator_block"] = False
-
-#             elif stripped_line.startswith("@"):
-#                 if not state["is_in_decorator_block"] and (
-#                         current_chunk_length > min_threshold):
-#                     should_cut = True
-#                 state["is_in_decorator_block"] = True
-
-#             elif is_boundary:
-#                 if not state["is_in_decorator_block"] and (
-#                         current_chunk_length > min_threshold):
-#                     should_cut = True
-#                 state["is_in_decorator_block"] = False
-#         return should_cut
-
 class PyChunker(Chunker):
 
-    MIN_FILL_TOP_LEVEL = 0.20  # Couper vite entre deux classes
-    MIN_FILL_METHOD = 0.60     # Couper entre les méthodes d'une même classe
+    MIN_FILL_TO_CUT_IF_BOUNDARY = 0.35
 
     def _init_state(self):
         return {"is_in_decorator_block": False}
@@ -178,38 +136,41 @@ class PyChunker(Chunker):
 
         stripped_line = line.lstrip()
         indentation = len(line) - len(stripped_line)
-
-        is_def_or_class = stripped_line.startswith(("def ", "class ", "async def "))
-        is_decorator = stripped_line.startswith("@")
-
         should_cut = False
+        min_threshold = max_size * self.MIN_FILL_TO_CUT_IF_BOUNDARY
+        is_boundary = stripped_line.startswith((
+                "if TYPE_CHECKING:",
+                "__all__", "if __name__"
+            ))
 
-        # --- NIVEAU 0 (Classes et fonctions globales) ---
         if indentation == 0:
-            if is_def_or_class or is_decorator:
-                if not state["is_in_decorator_block"] and current_chunk_length > (max_size * self.MIN_FILL_TOP_LEVEL):
+            if stripped_line.startswith(("def ", "class ", "async def ")):
+                if not state["is_in_decorator_block"] and (
+                        current_chunk_length > min_threshold):
                     should_cut = True
-                state["is_in_decorator_block"] = is_decorator
-            else:
                 state["is_in_decorator_block"] = False
 
-        # --- NIVEAU 4 (Méthodes à l'intérieur d'une classe) ---
-        elif indentation == 4:
-            if is_def_or_class or is_decorator:
-                if not state["is_in_decorator_block"] and current_chunk_length > (max_size * self.MIN_FILL_METHOD):
+            elif stripped_line.startswith("@"):
+                if not state["is_in_decorator_block"] and (
+                        current_chunk_length > min_threshold):
                     should_cut = True
-                state["is_in_decorator_block"] = is_decorator
-            else:
-                state["is_in_decorator_block"] = False
+                state["is_in_decorator_block"] = True
 
+            elif is_boundary:
+                if not state["is_in_decorator_block"] and (
+                        current_chunk_length > min_threshold):
+                    should_cut = True
+                state["is_in_decorator_block"] = False
         return should_cut
+
 
 class MdChunker(Chunker):
 
     MIN_THRESHOLD_TO_CUT_IF_H1 = 0.1
     MIN_THRESHOLD_TO_CUT_IF_H2 = 0.7
+    # best = 0.7 (81/85)
     # MIN_THRESHOLD_TO_CUT_IF_LINK = 0.95
-    MIN_THRESHOLD_TO_CUT_IF_EMPTY_LINE = 0.9
+    MIN_THRESHOLD_TO_CUT_IF_EMPTY_LINE = 0.8
 
     def _init_state(self):
         return {"is_in_code_block": False}
