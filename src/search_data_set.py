@@ -1,13 +1,19 @@
 from tqdm import tqdm
 import json
+from src.retriever import BM25Retriever
+from src.hybrid_retriever import HybridRetriever
 from src.models import StudentSearchResults, MinimalSource, MinimalSearchResults
 from src.dataset_loader import Dataset_loader
-from src.retriever import BM25Retriever, TfIdfRetriever
 from pathlib import Path
 from src.errors import RagCliArgumentError
 
 
 class SearchDataSet:
+    def __init__(
+            self, retriever: BM25Retriever | HybridRetriever, file_prefix: str = ""):
+        self.retriever = retriever
+        self.file_prefix = file_prefix
+
     def run(self, dataset_path: str, k: int, save_directory: str
             ) -> StudentSearchResults:
         loader = Dataset_loader()
@@ -25,7 +31,6 @@ class SearchDataSet:
                 f"Failed to create directory "
                 f"at {save_directory}. Details: {e}")
 
-        retriever = BM25Retriever()
         all_minimal_search_results = []
 
         for rag_question in tqdm(
@@ -34,12 +39,18 @@ class SearchDataSet:
             unit="query"
         ):
             if not rag_question.question:
-                raw_question_results = []
+                search_result = MinimalSearchResults(
+                    question_id=rag_question.question_id,
+                    question="",
+                    retrieved_sources=[]
+                )
+                all_minimal_search_results.append(search_result)
+                continue
 
             question_id = rag_question.question_id
             question = rag_question.question
 
-            raw_question_results = retriever.search(rag_question.question, k)
+            raw_question_results = self.retriever.search(rag_question.question, k)
 
             retrieved_sources = []
 
@@ -62,7 +73,11 @@ class SearchDataSet:
             search_results=all_minimal_search_results, k=k)
 
         dataset_name = Path(dataset_path).name
-        output_file = output_dir / dataset_name
+
+        prefixed_name = f"{self.file_prefix}{dataset_name}"
+
+        # L'objet Path assemble le dossier et le nouveau fichier
+        output_file = output_dir / prefixed_name
 
         with open(file=output_file, mode="w", encoding="utf-8") as f:
             json.dump(
