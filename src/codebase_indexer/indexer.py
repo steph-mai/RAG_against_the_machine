@@ -6,7 +6,7 @@
 #  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/29 18:10:10 by stephanie       ###   ########.fr        #
+#  Updated: 2026/07/31 15:51:27 by stephanie       ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -123,7 +123,7 @@ class DocIndexer:
             else:
                 text_to_tokenize = chunk_raw_text
 
-            chunk_clean_text = tokenizer.normalize_and_clean_raw_text(
+            chunk_clean_text = tokenizer.tokenize(
                 text_to_tokenize)
 
             if with_embeddings:
@@ -157,16 +157,17 @@ class DocIndexer:
             # On boucle par "pas" de 32 (la taille du batch)
             for i in tqdm(range(0, len(chunks_to_embed), batch_size), desc="Vectorization", unit="batch"):
                 # On extrait un sous-tableau de 32 textes
-                batch = chunks_to_embed[i : i + batch_size]
+                batch = chunks_to_embed[i: i + batch_size]
 
                 # On encode uniquement ce lot
-                batch_embeddings = embedder.encode(batch, show_progress_bar=False)
+                batch_embeddings = (
+                    embedder.encode(batch, show_progress_bar=False)
+                )
                 all_embeddings.extend(batch_embeddings)
 
             # On convertit le tout en une seule grande matrice NumPy
             embeddings_matrix = numpy.array(all_embeddings)
             numpy.save("data/embeddings.npy", embeddings_matrix)
-
 
         document_frequency = tokenizer.get_document_frequency(
             allterms_frequency)
@@ -187,7 +188,10 @@ class DocIndexer:
         with open(output_path, mode="w", encoding="utf-8") as f:
             json.dump(general_chunks_dict, f, ensure_ascii=False, indent=4)
 
-        print(f"Ingestion complete! "
-              f"Indexed {len(all_chunks)} chunks under data/processed/")
-
-        return output_path
+        if with_embeddings:
+            print(
+                "Bonus semantic embeddings: "
+                "Vector index generated successfully!")
+        else:
+            print(f"Ingestion complete! "
+                  f"Indices saved under {output_path.parent}/")

@@ -1,7 +1,5 @@
 import fire
 from functools import wraps
-from pathlib import Path
-
 from src.utils.logger import logger
 from src.search_data_set import SearchDataSet
 from src.errors import RagCliArgumentError, RagError
@@ -31,15 +29,8 @@ class RAGCli:
                 "max_chunk_size must be a positive integer.")
 
         indexer = DocIndexer(max_chunk_size=max_chunk_size)
-        index_path = indexer.build_and_save_index(
+        indexer.build_and_save_index(
             with_embeddings=with_embeddings)
-
-        print(f"Ingestion complete! Indices saved under {index_path.parent}/")
-
-        if with_embeddings:
-            print(
-                "Bonus semantic embeddings: "
-                "Vector index generated successfully!")
 
     @handle_cli_errors
     def search(self, query: str, k: int) -> str:
@@ -68,8 +59,6 @@ class RAGCli:
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
 
-        # 1. C'est la CLI qui choisit le bon retriever
-       # 1. C'est la CLI qui choisit le bon retriever
         if hybrid:
             from src.hybrid_retriever import HybridRetriever
             retriever = HybridRetriever()
@@ -78,8 +67,7 @@ class RAGCli:
             from src.retriever import BM25Retriever
             retriever = BM25Retriever()
 
-        # 2. On passe un préfixe vide dans tous les cas pour la Moulinette !
-        searcher = SearchDataSet(retriever=retriever, file_prefix="")
+        searcher = SearchDataSet(retriever=retriever)
         output_file = searcher.run(dataset_path, k, save_directory)
 
         print(f"Saved student_search_results to {output_file}")
@@ -108,10 +96,13 @@ class RAGCli:
         # print(f"Saved student_search_results_and_answer to {output_file}")
 
     @handle_cli_errors
-    def evaluate(self, student_search_results_path: str, dataset_path: str) -> None:
+    def evaluate(
+        self, student_search_results_path: str, dataset_path: str
+        ) -> None:
         """Report your own recall@k against a ground-truth dataset."""
         if not student_search_results_path:
-            raise RagCliArgumentError("Give a valid student_search_results_path.")
+            raise RagCliArgumentError(
+                "Give a valid student_search_results_path.")
         if not dataset_path:
             raise RagCliArgumentError("Give a valid dataset_path.")
 
@@ -123,5 +114,4 @@ class RAGCli:
 
 
 if __name__ == "__main__":
-    # Invoque la CLI avec python-fire
     fire.Fire(RAGCli)

@@ -10,9 +10,8 @@ from src.errors import RagCliArgumentError
 
 class SearchDataSet:
     def __init__(
-            self, retriever: BM25Retriever | HybridRetriever, file_prefix: str = ""):
+            self, retriever: BM25Retriever | HybridRetriever):
         self.retriever = retriever
-        self.file_prefix = file_prefix
 
     def run(self, dataset_path: str, k: int, save_directory: str
             ) -> StudentSearchResults:
@@ -74,10 +73,7 @@ class SearchDataSet:
 
         dataset_name = Path(dataset_path).name
 
-        prefixed_name = f"{self.file_prefix}{dataset_name}"
-
-        # L'objet Path assemble le dossier et le nouveau fichier
-        output_file = output_dir / prefixed_name
+        output_file = output_dir / dataset_name
 
         with open(file=output_file, mode="w", encoding="utf-8") as f:
             json.dump(

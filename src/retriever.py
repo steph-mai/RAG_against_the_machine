@@ -23,7 +23,7 @@
 #             raise RagLoadError(f"Error decoding JSON from index file: {e}")
 
 #     def _clean_query(self, query: str) -> list[str]:
-#         return self.tokenizer.normalize_and_clean_raw_text(query)
+#         return self.tokenizer.tokenize(query)
 
 #     def search(self, query: str, k: int
 #                ) -> list[dict[str, str | int | dict[str, int]]]:
@@ -104,6 +104,7 @@ from pathlib import Path
 from src.tokenizer import Tokenizer
 from src.errors import RagLoadError
 
+
 class BM25Retriever:
     def __init__(self, index_path: str = "data/processed/index.json"):
         self.tokenizer = Tokenizer()
@@ -127,7 +128,7 @@ class BM25Retriever:
         self.all_chunks_data = self.index["all_chunks_data"]
 
     def _clean_query(self, query: str) -> list[str]:
-        return self.tokenizer.normalize_and_clean_raw_text(query)
+        return self.tokenizer.tokenize(query)
 
     def get_raw_scores(self, query: str, top_k: int) -> list[tuple[int, float]]:
         """
