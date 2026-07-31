@@ -1,12 +1,10 @@
 import fire
 from functools import wraps
-from pathlib import Path
-
 from src.utils.logger import logger
 from src.search_data_set import SearchDataSet
 from src.errors import RagCliArgumentError, RagError
 from src.codebase_indexer.indexer import DocIndexer
-from src.retriever import BM25Retriever, TfIdfRetriever
+from src.retriever import BM25Retriever
 from src.evaluator import Evaluator
 
 
@@ -24,18 +22,15 @@ def handle_cli_errors(function) -> callable:
 
 class RAGCli:
     @handle_cli_errors
-    def index(self, max_chunk_size: int = 2000) -> None:
+    def index(self, max_chunk_size: int = 2000, with_embeddings: bool = False) -> None:
         """Ingest data/raw/ and build the index under data/processed/."""
         if max_chunk_size <= 0:
-            raise RagCliArgumentError("max_chunk_size must be a positive integer.")
+            raise RagCliArgumentError(
+                "max_chunk_size must be a positive integer.")
 
-        # Attention : Il faut bien passer la variable max_chunk_size ici,
-        # pas la valeur codée en dur 2000 !
         indexer = DocIndexer(max_chunk_size=max_chunk_size)
-        index_path = indexer.build_and_save_index()
-
-        # Le sujet attend ce type d'affichage
-        print(f"Ingestion complete! Indices saved under {index_path.parent}/")
+        indexer.build_and_save_index(
+            with_embeddings=with_embeddings)
 
     @handle_cli_errors
     def search(self, query: str, k: int) -> str:
@@ -59,15 +54,22 @@ class RAGCli:
         return "\n".join(results)
 
     @handle_cli_errors
-    def search_dataset(self, dataset_path: str, k: int, save_directory: str) -> None:
+    def search_dataset(self, dataset_path: str, k: int, save_directory: str, hybrid: bool = False) -> None:
         """Run search over a whole dataset and write a StudentSearchResults JSON file."""
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
 
-        searcher = SearchDataSet()
+        if hybrid:
+            from src.hybrid_retriever import HybridRetriever
+            retriever = HybridRetriever()
+
+        else:
+            from src.retriever import BM25Retriever
+            retriever = BM25Retriever()
+
+        searcher = SearchDataSet(retriever=retriever)
         output_file = searcher.run(dataset_path, k, save_directory)
 
-        # Message exact attendu par le sujet
         print(f"Saved student_search_results to {output_file}")
 
     @handle_cli_errors
@@ -94,10 +96,13 @@ class RAGCli:
         # print(f"Saved student_search_results_and_answer to {output_file}")
 
     @handle_cli_errors
-    def evaluate(self, student_search_results_path: str, dataset_path: str) -> None:
+    def evaluate(
+        self, student_search_results_path: str, dataset_path: str
+        ) -> None:
         """Report your own recall@k against a ground-truth dataset."""
         if not student_search_results_path:
-            raise RagCliArgumentError("Give a valid student_search_results_path.")
+            raise RagCliArgumentError(
+                "Give a valid student_search_results_path.")
         if not dataset_path:
             raise RagCliArgumentError("Give a valid dataset_path.")
 
@@ -109,5 +114,4 @@ class RAGCli:
 
 
 if __name__ == "__main__":
-    # Invoque la CLI avec python-fire
     fire.Fire(RAGCli)
