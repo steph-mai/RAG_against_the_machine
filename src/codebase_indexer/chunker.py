@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  chunker.py                                        :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/01 09:37:31 by stmaire         #+#    #+#               #
-#  Updated: 2026/07/29 14:44:26 by stephanie       ###   ########.fr        #
+#  Updated: 2026/08/04 13:49:55 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining the chunking strategies for different file types."""
@@ -45,13 +45,14 @@ class Chunker(ABC):
 
         state = self._init_state()
 
-        def append_and_clear_buffer() -> None:
+        def _append_and_clear_buffer() -> None:
             nonlocal current_chunk_length, start_index
             if current_chunk_length > 0:
+                actual_length = min(current_chunk_length, max_size)
                 chunks_list.append(MinimalSource(
                     file_path=file_path,
                     first_character_index=start_index,
-                    last_character_index=start_index + current_chunk_length
+                    last_character_index=start_index + actual_length
                 ))
                 start_index += current_chunk_length
                 current_chunk_length = 0
@@ -59,39 +60,47 @@ class Chunker(ABC):
         for line in lines:
             line_length = len(line)
 
+            # Gestion des lignes anormalement plus grandes que max_size
             if line_length > max_size:
-                append_and_clear_buffer()
+                _append_and_clear_buffer()
 
+                line_start_idx = start_index
                 for index in range(0, line_length, max_size):
                     line_slice = line[index:index + max_size]
+                    slice_len = len(line_slice)
+
+                    if slice_len > max_size:
+                        line_slice = line_slice[:max_size]
+                        slice_len = max_size
+
                     chunks_list.append(MinimalSource(
                         file_path=file_path,
-                        first_character_index=start_index + index,
-                        last_character_index=start_index + index + len(
-                            line_slice)
+                        first_character_index=line_start_idx + index,
+                        last_character_index=line_start_idx + index + slice_len
                     ))
                 start_index += line_length
                 continue
 
             if self._should_cut(line, current_chunk_length, max_size, state):
-                append_and_clear_buffer()
+                _append_and_clear_buffer()
 
             if current_chunk_length + line_length > max_size:
                 if current_chunk_length > 0:
+                    actual_length = max(current_chunk_length, max_size)
                     chunks_list.append(MinimalSource(
                         file_path=file_path,
                         first_character_index=start_index,
-                        last_character_index=start_index + current_chunk_length
+                        last_character_index=start_index + actual_length
                     ))
-                    actual_overlap = min(overlap, current_chunk_length)
-                    start_index += current_chunk_length - actual_overlap
+                    actual_overlap = min(overlap, actual_length)
+                    start_index += actual_length - actual_overlap
                     current_chunk_length = actual_overlap
                 else:
-                    append_and_clear_buffer()
+                    _append_and_clear_buffer()
 
             current_chunk_length += line_length
 
-        append_and_clear_buffer()
+        _append_and_clear_buffer()
 
         return chunks_list
 

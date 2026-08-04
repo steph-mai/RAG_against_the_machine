@@ -3,17 +3,17 @@
 #                                                      :::      ::::::::    #
 #  indexer.py                                        :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 11:41:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/31 15:51:27 by stephanie       ###   ########.fr        #
+#  Updated: 2026/08/04 11:05:13 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import json
 import re
-import numpy
-from sentence_transformers import SentenceTransformer
+import chromadb
+from chromadb.utils import embedding_functions
 from tqdm import tqdm
 from pathlib import Path
 from typing import List
@@ -71,7 +71,6 @@ class DocIndexer:
         total_len_chunks = 0
 
         if with_embeddings:
-            embedder = SentenceTransformer('all-MiniLM-L6-v2')
             chunks_to_embed = []
 
         current_open_file = ""
@@ -127,8 +126,7 @@ class DocIndexer:
                 text_to_tokenize)
 
             if with_embeddings:
-                chunk_to_embed = text_to_tokenize
-                chunks_to_embed.append(chunk_to_embed)
+                chunks_to_embed.append(text_to_tokenize)
 
             clean_chunks.append(chunk_clean_text)
 
@@ -151,23 +149,37 @@ class DocIndexer:
             all_chunks_data.append(chunk_data)
 
         if with_embeddings:
-            batch_size = 32
-            all_embeddings = []
+            chroma_client = chromadb.PersistentClient(path="data/chroma")
 
-            # On boucle par "pas" de 32 (la taille du batch)
-            for i in tqdm(range(0, len(chunks_to_embed), batch_size), desc="Vectorization", unit="batch"):
-                # On extrait un sous-tableau de 32 textes
-                batch = chunks_to_embed[i: i + batch_size]
+            try:
+                chroma_client.delete_collection(name="codebase_chunks")
+            except Exception:
+                pass
 
-                # On encode uniquement ce lot
-                batch_embeddings = (
-                    embedder.encode(batch, show_progress_bar=False)
+            sentence_transformer_ef = (
+                embedding_functions.SentenceTransformerEmbeddingFunction(
+                    model_name="all-MiniLM-L6-v2"
+                ))
+
+            collection = chroma_client.create_collection(
+                name="codebase_chunks",
+                embedding_function=sentence_transformer_ef
+            )
+
+            batch_size = 100
+            for i in tqdm(
+                range(
+                    0,
+                    len(chunks_to_embed),
+                    batch_size
+                    ), desc="ChromaDB Indexing", unit="batch"):
+                batch_texts = chunks_to_embed[i: i + batch_size]
+                batch_ids = [str(j) for j in range(i, i + len(batch_texts))]
+
+                collection.add(
+                    documents=batch_texts,
+                    ids=batch_ids
                 )
-                all_embeddings.extend(batch_embeddings)
-
-            # On convertit le tout en une seule grande matrice NumPy
-            embeddings_matrix = numpy.array(all_embeddings)
-            numpy.save("data/embeddings.npy", embeddings_matrix)
 
         document_frequency = tokenizer.get_document_frequency(
             allterms_frequency)
@@ -175,7 +187,6 @@ class DocIndexer:
         avg_len_chunks = total_len_chunks / len(all_chunks)
 
         general_chunks_dict = {}
-
         general_chunks_dict["chunks_number"] = len(all_chunks)
         general_chunks_dict["avg_len_chunks"] = avg_len_chunks
         general_chunks_dict["max_chunk_size"] = self.max_chunk_size
@@ -191,7 +202,7 @@ class DocIndexer:
         if with_embeddings:
             print(
                 "Bonus semantic embeddings: "
-                "Vector index generated successfully!")
+                "Vector index generated successfully with ChromaDB!")
         else:
             print(f"Ingestion complete! "
                   f"Indices saved under {output_path.parent}/")

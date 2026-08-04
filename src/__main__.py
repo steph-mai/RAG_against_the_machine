@@ -22,7 +22,8 @@ def handle_cli_errors(function) -> callable:
 
 class RAGCli:
     @handle_cli_errors
-    def index(self, max_chunk_size: int = 2000, with_embeddings: bool = False) -> None:
+    def index(self, max_chunk_size: int = 2000, with_embeddings: bool = False
+              ) -> None:
         """Ingest data/raw/ and build the index under data/processed/."""
         if max_chunk_size <= 0:
             raise RagCliArgumentError(
@@ -40,7 +41,7 @@ class RAGCli:
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
 
-        retriever = BM25Retriever() # ou BM25Retriever()
+        retriever = BM25Retriever()
         retrieved_chunks = retriever.search(query, k)
 
         results = []
