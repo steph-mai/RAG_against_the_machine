@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from src.dataset_loader import Dataset_loader
+from src.dataset_loader import DataSetLoader
 from src.search_data_set import SearchDataSet
 from src.models import StudentSearchResults
 from src.errors import RagCliArgumentError, RagLoadError, RagValidationError
@@ -8,7 +8,7 @@ from src.errors import RagCliArgumentError, RagLoadError, RagValidationError
 class Evaluator:
     def run(
             self, student_search_results_path: str, dataset_path: str) -> float:
-        loader = Dataset_loader()
+        loader = DataSetLoader
         truth_dataset = loader.dataset_load(dataset_path)
 
         try:

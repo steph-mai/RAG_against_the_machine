@@ -62,6 +62,11 @@ class RAGCli:
         if max_chunk_size <= 0:
             raise RagCliArgumentError(
                 "max_chunk_size must be a positive integer.")
+        if max_chunk_size > 2000:
+            raise RagCliArgumentError(
+                "max_chunk_size can not be higher than 2000 "
+                "(moulinette max_context_length)."
+            )
 
         indexer = DocIndexer(max_chunk_size=max_chunk_size)
         indexer.build_and_save_index(with_embeddings=with_embeddings)

@@ -79,10 +79,6 @@ class BM25Retriever:
         return scores[:top_k]
 
     def search(self, query: str, top_k: int) -> list[dict]:
-        """
-        L'ancienne méthode, refactorisée pour ne pas dupliquer de code.
-        Elle continue de renvoyer la liste de dictionnaires pour la CLI.
-        """
         raw_results = self.get_raw_scores(query, top_k)
 
         final_results = []

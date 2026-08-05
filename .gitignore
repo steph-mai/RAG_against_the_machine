@@ -10,9 +10,9 @@ __pycache__
 #IDE
 .vscode/
 
-data/
-datasets_public/
-datasets_public.zip
+data/processed
+data/output
+data/chroma
 
 vllm-0.10.1/
 vllm-0.10.1.zip

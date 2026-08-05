@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  dataset_loader.py                                 :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 11:39:10 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/21 17:11:32 by stephanie       ###   ########.fr        #
+#  Updated: 2026/08/05 14:10:58 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -17,7 +17,7 @@ from pydantic import ValidationError
 from src.errors import RagLoadError, RagValidationError
 
 
-class Dataset_loader:
+class DataSetLoader:
     def dataset_load(self, file_path: str) -> RagDataset:
         """
         Loads a JSON dataset into a RagDataset model.
