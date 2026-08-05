@@ -2,32 +2,50 @@ from tqdm import tqdm
 import json
 from src.retriever import BM25Retriever
 from src.hybrid_retriever import HybridRetriever
-from src.models import StudentSearchResults, MinimalSource, MinimalSearchResults
+from src.models import (
+    StudentSearchResults, MinimalSource, MinimalSearchResults)
 from src.dataset_loader import DataSetLoader
 from pathlib import Path
 from src.errors import RagCliArgumentError
 
 
 class SearchDataSet:
+    """Manage dataset search execution and save minimal search results.
+
+    This class wraps a BM25 or hybrid retriever and exports the search results
+    for a dataset into a JSON file.
+
+    Args:
+        retriever: Retriever used to perform the search queries.
+    """
+
     def __init__(
             self, retriever: BM25Retriever | HybridRetriever):
+        """Initialize the dataset search executor.
+
+        Args:
+            retriever: Retriever used to perform the search queries.
+        """
         self.retriever = retriever
 
-    def _create_required_directory(
+    def _create_required_dir(
             self,
             dataset_path: str,
             save_directory: str = "data/output/search_results"
-            )-> None:
-        
-    def run(
-        self,
-        dataset_path: str,
-        k: int,
-        save_directory: str = "data/output/search_results"
-    ) -> Path:
-        loader = DataSetLoader()
-        dataset_model = loader.dataset_load(dataset_path)
+            ) -> Path:
+        """Create the output directory and return the target file path.
 
+        Args:
+            dataset_path: Path to the dataset file.
+            save_directory: Base directory where results are saved.
+
+        Returns:
+            Path to the JSON output file.
+
+        Raises:
+            RagCliArgumentError: If the directory cannot be created because of
+                permissions or an OS-level failure.
+        """
         dataset_name = Path(dataset_path).name
 
         dataset_folder_name = Path(dataset_path).parent.name
@@ -46,6 +64,32 @@ class SearchDataSet:
             raise RagCliArgumentError(
                 f"Failed to create directory "
                 f"at {output_dir}. Details: {e}")
+
+        output_file = output_dir / dataset_name
+
+        return output_file
+
+    def run(
+        self,
+        dataset_path: str,
+        k: int,
+        save_directory: str = "data/output/search_results"
+    ) -> Path:
+        """Run the search pipeline on a dataset and save the results.
+
+        Args:
+            dataset_path: Path to the dataset file to search.
+            k: Number of retrieved sources per question.
+            save_directory: Base directory used to store the output file.
+
+        Returns:
+            Path to the saved JSON file.
+        """
+        loader = DataSetLoader()
+        dataset_model = loader.dataset_load(dataset_path)
+
+        output_file = self._create_required_dir(
+            dataset_path, save_directory)
 
         all_minimal_search_results = []
 
@@ -87,8 +131,6 @@ class SearchDataSet:
 
         final_results = StudentSearchResults(
             search_results=all_minimal_search_results, k=k)
-
-        output_file = output_dir / dataset_name
 
         with open(file=output_file, mode="w", encoding="utf-8") as f:
             json.dump(
