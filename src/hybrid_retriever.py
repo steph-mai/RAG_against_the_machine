@@ -4,26 +4,54 @@ from src.errors import RagLoadError
 
 
 class HybridRetriever:
+    """Combine BM25 lexical retrieval with ChromaDB semantic retrieval.
+
+    Args:
+        index_path: Path to the processed index JSON file.
+        chroma_persist_dir: Directory where the ChromaDB persistent collection
+            is stored.
+    """
+
     def __init__(
             self,
             index_path="data/processed/index.json",
             chroma_persist_dir="data/chroma"
             ):
-        """Initialize the hybrid retriever with BM25 and ChromaDB."""
+        """Initialize the hybrid retriever with BM25 and ChromaDB.
+
+        Args:
+            index_path: Path to the processed index JSON file.
+            chroma_persist_dir: Directory where the ChromaDB persistent
+                collection is stored.
+
+        Raises:
+            RagLoadError: If the ChromaDB collection cannot be loaded.
+        """
         self.bm25_retriever = BM25Retriever(index_path)
         self.chunks_data = self.bm25_retriever.all_chunks_data
 
         try:
             self.client = chromadb.PersistentClient(path=chroma_persist_dir)
-            self.collection = self.client.get_collection(name="codebase_chunks")
+            self.collection = self.client.get_collection(
+                name="codebase_chunks")
         except Exception:
             raise RagLoadError(
                 f"ChromaDB collection not found at {chroma_persist_dir}. "
                 "Did you run the vector indexing step?"
             )
 
-    def search_semantic(self, query: str, top_k: int) -> list[tuple[int, float]]:
-        """Semantic search managed natively by ChromaDB."""
+    def search_semantic(
+            self, query: str, top_k: int) -> list[tuple[int, float]]:
+        """Search semantically using the ChromaDB collection.
+
+        Args:
+            query: Query string to embed and search.
+            top_k: Maximum number of semantic results to return.
+
+        Returns:
+            List of tuples whose first element is the chunk index and second
+            is the semantic similarity score.
+        """
         results = self.collection.query(
             query_texts=[query],
             n_results=top_k
@@ -41,7 +69,16 @@ class HybridRetriever:
         return semantic_results
 
     def search(self, query: str, top_k: int) -> list[dict]:
-        """Fusionne BM25 et Recherche Sémantique via RRF."""
+        """Fuse BM25 and semantic retrieval results
+        using reciprocal rank fusion (rrf algorithm)
+
+        Args:
+            query: Query string to search.
+            top_k: Maximum number of final results to return.
+
+        Returns:
+            List of dictionaries containing the top-ranked chunks.
+        """
         pool_size = max(top_k * 2, 60)
 
         bm25_results = self.bm25_retriever.get_raw_scores(query, pool_size)
