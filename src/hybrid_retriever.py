@@ -1,4 +1,5 @@
 import chromadb
+from pathlib import Path
 from src.retriever import BM25Retriever
 from src.errors import RagLoadError
 
@@ -79,10 +80,11 @@ class HybridRetriever:
         Returns:
             List of dictionaries containing the top-ranked chunks.
         """
-        pool_size = max(top_k * 2, 60)
+        pool_results_size = max(top_k * 2, 60)
 
-        bm25_results = self.bm25_retriever.get_raw_scores(query, pool_size)
-        semantic_results = self.search_semantic(query, pool_size)
+        bm25_results = self.bm25_retriever.get_raw_scores(
+            query, pool_results_size)
+        semantic_results = self.search_semantic(query, pool_results_size)
 
         rrf_scores = {}
         RRF_K = 60
@@ -101,7 +103,7 @@ class HybridRetriever:
             rrf_scores.items(), key=lambda item: item[1], reverse=True
         )
         final_top_k_indices = [
-            chunk_idx for chunk_idx, rrf_score in sorted_rrf[:top_k]
+            chunk_idx for chunk_idx, _ in sorted_rrf[:top_k]
         ]
 
         return [self.chunks_data[idx] for idx in final_top_k_indices]

@@ -56,36 +56,39 @@ class DocIndexer:
         txt_chunker = TxtChunker()
 
         for file_path in tqdm(files_to_process, desc="Chunking", unit="file"):
-            with open(file_path, mode="r", encoding="utf-8") as file:
-                raw_content = file.read()
+            try:
+                with open(file_path, mode="r", encoding="utf-8") as file:
+                    raw_content = file.read()
+            except (PermissionError, UnicodeDecodeError, OSError):
+                continue
 
-                path_str = str(file_path)
+            path_str = str(file_path)
 
-                if file_path.suffix == ".py":
-                    chunks_list = py_chunker.chunk(
-                        raw_content,
-                        path_str,
-                        self.max_chunk_size,
-                    )
-                elif file_path.suffix == ".txt":
-                    chunks_list = txt_chunker.chunk(
-                        raw_content,
-                        path_str,
-                        self.max_chunk_size,
-                    )
-                elif file_path.suffix == ".md":
-                    chunks_list = md_chunker.chunk(
-                        raw_content,
-                        path_str,
-                        self.max_chunk_size,
-                    )
-                else:
-                    continue
+            if file_path.suffix == ".py":
+                chunks_list = py_chunker.chunk(
+                    raw_content,
+                    path_str,
+                    self.max_chunk_size,
+                )
+            elif file_path.suffix == ".txt":
+                chunks_list = txt_chunker.chunk(
+                    raw_content,
+                    path_str,
+                    self.max_chunk_size,
+                )
+            elif file_path.suffix == ".md":
+                chunks_list = md_chunker.chunk(
+                    raw_content,
+                    path_str,
+                    self.max_chunk_size,
+                )
+            else:
+                continue
 
-                if not chunks_list:
-                    continue
+            if not chunks_list:
+                continue
 
-                all_chunks.extend(chunks_list)
+            all_chunks.extend(chunks_list)
 
         if not all_chunks:
             raise RagLoadError(f"No chunk in directory: {self.input_dir}")
@@ -106,9 +109,13 @@ class DocIndexer:
         end_index = chunk.last_character_index
 
         if file_path != self.current_open_file:
-            with open(file_path, mode="r", encoding="utf-8") as f:
-                self.full_text = f.read()
-            self.current_open_file = file_path
+            try:
+                with open(file_path, mode="r", encoding="utf-8") as f:
+                    self.full_text = f.read()
+                self.current_open_file = file_path
+            except (PermissionError, UnicodeDecodeError, OSError):
+                self.full_text = ""
+                return Path(file_path).name
 
         path_obj = Path(file_path)
         current_name = path_obj.name

@@ -3,13 +3,14 @@
 #                                                      :::      ::::::::    #
 #  ingestion.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 14:01:19 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/23 14:41:33 by stephanie       ###   ########.fr        #
+#  Updated: 2026/08/06 09:23:57 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module for discovering and loading the vLLM repository files."""
+import os
 from pathlib import Path
 from typing import List
 from src.errors import RagLoadError
@@ -45,6 +46,9 @@ class CorpusVllmCompiler():
         if not self.raw_corpus_path.is_dir():
             raise RagLoadError(f"Repository path '{self.raw_corpus_path}' "
                                f"is not a directory.")
+        if not os.access(self.raw_corpus_path, os.R_OK):
+            raise RagLoadError(f"Permission denied to read repository "
+                               f"at '{self.raw_corpus_path}'.")
 
         valid_paths = []
 

@@ -121,7 +121,6 @@ class BM25Retriever:
             BM25 score.
         """
         raw_results = self.get_raw_scores(query, top_k)
-        print(raw_results)
 
         final_results = []
         for idx, score in raw_results:
