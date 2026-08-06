@@ -1,12 +1,12 @@
 import fire
 from functools import wraps
 
-from src.codebase_indexer.indexer import DocIndexer
-from src.errors import RagCliArgumentError, RagError
-from src.evaluator import Evaluator
-from src.retriever import BM25Retriever
-from src.search_data_set import SearchDataSet
-from src.utils.logger import logger
+from src.indexing import DocIndexer
+from src.core.errors import RagCliArgumentError, RagError
+from src.dataset.evaluator import Evaluator
+from src.retrieval import BM25Retriever
+from src.dataset.search_data_set import SearchDataSet
+from src.core.logger import logger
 
 
 def handle_cli_errors(function) -> callable:
@@ -122,11 +122,11 @@ class RAGCli:
             raise RagCliArgumentError("k must be a positive integer.")
 
         if hybrid:
-            from src.hybrid_retriever import HybridRetriever
+            from src.retrieval import HybridRetriever
 
             retriever = HybridRetriever()
         else:
-            from src.retriever import BM25Retriever
+            from src.retrieval import BM25Retriever
 
             retriever = BM25Retriever()
 
@@ -151,8 +151,8 @@ class RAGCli:
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
 
-        # Logic to be implemented later with the LLM
-        pass
+        answer = Answerer()
+        LLM_answer = answer.answer(query, k)
 
     @handle_cli_errors
     def answer_dataset(

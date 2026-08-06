@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
-from src.dataset_loader import DataSetLoader
-from src.search_data_set import SearchDataSet
-from src.models import StudentSearchResults
-from src.errors import RagCliArgumentError, RagLoadError, RagValidationError
+from src.dataset import DataSetLoader
+from src.core.models import StudentSearchResults
+from src.core.errors import RagCliArgumentError, RagLoadError, RagValidationError
+
 
 class Evaluator:
     def run(

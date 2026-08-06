@@ -6,15 +6,15 @@
 #  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 11:39:10 by stephanie       #+#    #+#               #
-#  Updated: 2026/08/05 14:10:58 by stmaire         ###   ########.fr        #
+#  Updated: 2026/08/06 11:08:29 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
 import json
 from pathlib import Path
-from src.models import RagDataset
+from src.core.models import RagDataset
 from pydantic import ValidationError
-from src.errors import RagLoadError, RagValidationError
+from src.core.errors import RagLoadError, RagValidationError
 
 
 class DataSetLoader:

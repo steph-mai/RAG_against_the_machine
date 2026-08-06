@@ -6,7 +6,7 @@
 #  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/01 09:37:31 by stmaire         #+#    #+#               #
-#  Updated: 2026/08/04 14:49:57 by stmaire         ###   ########.fr        #
+#  Updated: 2026/08/06 11:08:29 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining the chunking strategies for different file types."""
@@ -14,7 +14,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from src.models import MinimalSource
+from src.core.models import MinimalSource
 
 
 class Chunker(ABC):

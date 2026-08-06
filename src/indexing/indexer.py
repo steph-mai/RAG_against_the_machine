@@ -6,14 +6,13 @@ from pathlib import Path
 from typing import List
 
 import chromadb
-from chromadb.utils import embedding_functions
 from tqdm import tqdm
 
-from src.codebase_indexer.chunker import MdChunker, PyChunker, TxtChunker
-from src.codebase_indexer.ingestion import CorpusVllmCompiler
-from src.tokenizer import Tokenizer
-from src.errors import RagLoadError
-from src.models import MinimalSource
+from .chunker import MdChunker, PyChunker, TxtChunker
+from .ingestion import CorpusVllmCompiler
+from src.core.tokenizer import Tokenizer
+from src.core.errors import RagLoadError
+from src.core.models import MinimalSource
 
 CLASS_REGEX = re.compile(r"^class\s+([A-Za-z0-9_]+)", re.MULTILINE)
 DEF_REGEX = re.compile(r"^[ \t]*def\s+([A-Za-z0-9_]+)", re.MULTILINE)

@@ -1,11 +1,13 @@
 import json
 import math
 from pathlib import Path
-from src.tokenizer import Tokenizer
-from src.errors import RagLoadError
+from typing import Any
+from src.core.tokenizer import Tokenizer
+from src.core.errors import RagLoadError
+from .retriever import Retriever
 
 
-class BM25Retriever:
+class BM25Retriever(Retriever):
     """Retrieve relevant text chunks using the BM25 ranking function.
 
     Args:
@@ -109,7 +111,7 @@ class BM25Retriever:
 
         return scores[:top_k]
 
-    def search(self, query: str, top_k: int) -> list[dict]:
+    def search(self, query: str, top_k: int) -> list[dict[str, Any]]:
         """Search for relevant chunks and return enriched results.
 
         Args:

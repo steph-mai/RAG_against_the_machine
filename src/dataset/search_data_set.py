@@ -1,12 +1,12 @@
 from tqdm import tqdm
 import json
-from src.retriever import BM25Retriever
-from src.hybrid_retriever import HybridRetriever
-from src.models import (
+from src.retrieval import BM25Retriever
+from src.retrieval import HybridRetriever
+from src.core.models import (
     StudentSearchResults, MinimalSource, MinimalSearchResults)
-from src.dataset_loader import DataSetLoader
+from src.dataset import DataSetLoader
 from pathlib import Path
-from src.errors import RagCliArgumentError
+from src.core.errors import RagCliArgumentError
 
 
 class SearchDataSet:

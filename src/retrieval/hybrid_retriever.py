@@ -1,10 +1,10 @@
 import chromadb
-from pathlib import Path
-from src.retriever import BM25Retriever
-from src.errors import RagLoadError
+from .bm25_retriever import BM25Retriever
+from .retriever import Retriever
+from src.core.errors import RagLoadError
 
 
-class HybridRetriever:
+class HybridRetriever(Retriever):
     """Combine BM25 lexical retrieval with ChromaDB semantic retrieval.
 
     Args:

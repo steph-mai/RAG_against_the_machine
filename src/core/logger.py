@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  logger.py                                         :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/23 10:21:19 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/23 10:49:59 by stephanie       ###   ########.fr        #
+#  Updated: 2026/08/06 11:46:47 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -28,8 +28,6 @@ def get_logger(name: str = "rag") -> logging.Logger:
     """
     logger = logging.getLogger(name)
     if not logger.handlers:
-        # évite de dupliquer les logs si la fonction adéjà étét appelée =
-        # s'il y a déjà des handlers
         logger.setLevel(logging.INFO)
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(logging.Formatter())

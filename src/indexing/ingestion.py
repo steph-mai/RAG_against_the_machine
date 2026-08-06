@@ -6,14 +6,14 @@
 #  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 14:01:19 by stephanie       #+#    #+#               #
-#  Updated: 2026/08/06 09:23:57 by stmaire         ###   ########.fr        #
+#  Updated: 2026/08/06 11:08:29 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module for discovering and loading the vLLM repository files."""
 import os
 from pathlib import Path
 from typing import List
-from src.errors import RagLoadError
+from src.core.errors import RagLoadError
 
 
 class CorpusVllmCompiler():
