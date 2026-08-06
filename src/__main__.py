@@ -5,6 +5,7 @@ from src.indexing import DocIndexer
 from src.core.errors import RagCliArgumentError, RagError
 from src.dataset.evaluator import Evaluator
 from src.retrieval import BM25Retriever
+from src.generation.answerer import Answerer
 from src.dataset.search_data_set import SearchDataSet
 from src.core.logger import logger
 
@@ -72,12 +73,13 @@ class RAGCli:
         indexer.build_and_save_index(with_embeddings=with_embeddings)
 
     @handle_cli_errors
-    def search(self, query: str, k: int) -> str:
+    def search(self, query: str, k: int, hybrid: bool = False) -> str:
         """Return the top-k sources for a single query.
 
         Args:
             query: The user query to search.
             k: Number of results to return.
+            hybrid: Whether to use the hybrid retriever instead of BM25.
 
         Returns:
             A newline-separated list of file paths and character ranges.
@@ -87,7 +89,12 @@ class RAGCli:
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
 
-        retriever = BM25Retriever()
+        if hybrid:
+            from src.retrieval import HybridRetriever
+            retriever = HybridRetriever()
+        else:
+            retriever = BM25Retriever()
+
         retrieved_chunks = retriever.search(query, k)
 
         results = []
@@ -123,11 +130,8 @@ class RAGCli:
 
         if hybrid:
             from src.retrieval import HybridRetriever
-
             retriever = HybridRetriever()
         else:
-            from src.retrieval import BM25Retriever
-
             retriever = BM25Retriever()
 
         searcher = SearchDataSet(retriever=retriever)
@@ -136,12 +140,13 @@ class RAGCli:
         print(f"Saved student_search_results to {output_file}")
 
     @handle_cli_errors
-    def answer(self, query: str, k: int):
+    def answer(self, query: str, k: int = 10, hybrid: bool = False) -> None:
         """Answer a single query using the retrieved context.
 
         Args:
             query: The user query to answer.
             k: Number of retrieved chunks to use as context.
+            hybrid: Whether to use the hybrid retriever instead of BM25.
 
         Returns:
             None
@@ -151,8 +156,21 @@ class RAGCli:
         if k <= 0:
             raise RagCliArgumentError("k must be a positive integer.")
 
-        answer = Answerer()
-        LLM_answer = answer.answer(query, k)
+        if hybrid:
+            from src.retrieval import HybridRetriever
+            retriever = HybridRetriever()
+        else:
+            retriever = BM25Retriever()
+
+        retrieved_chunks = retriever.search(query, top_k=k)
+
+        answerer = Answerer()
+        generated_answer = answerer.generate_answer(
+            question_id="query_1",
+            query=query,
+            retrieved_chunks=retrieved_chunks)
+
+        print(generated_answer)
 
     @handle_cli_errors
     def answer_dataset(
@@ -207,5 +225,9 @@ class RAGCli:
         )
 
 
-if __name__ == "__main__":
+def main():
     fire.Fire(RAGCli)
+
+
+if __name__ == "__main__":
+    main()
