@@ -3,6 +3,7 @@ from functools import wraps
 
 from src.indexing import DocIndexer
 from src.core.errors import RagCliArgumentError, RagError
+from src.core.formatters import Formatter
 from src.dataset.evaluator import Evaluator
 from src.retrieval import BM25Retriever
 from src.generation.answerer import Answerer
@@ -170,7 +171,8 @@ class RAGCli:
             query=query,
             retrieved_chunks=retrieved_chunks)
 
-        print(generated_answer)
+        formatter = Formatter()
+        formatter.print_answer(generated_answer)
 
     @handle_cli_errors
     def answer_dataset(
@@ -187,15 +189,16 @@ class RAGCli:
         Returns:
             None
         """
-        if not student_search_results_path:
-            raise RagCliArgumentError(
-                "Give a valid student_search_results_path."
-                )
         if not save_directory:
             raise RagCliArgumentError("Give a valid save_directory.")
 
-        # Logic to be implemented later...
-        # print(f"Saved student_search_results_and_answer to {output_file}")
+        answerer = Answerer()
+        output_file = answerer.run(
+            student_search_results_path=student_search_results_path,
+            save_directory=save_directory
+        )
+
+        print(f"Saved student_search_results_and_answer to {output_file}")
 
     @handle_cli_errors
     def evaluate(

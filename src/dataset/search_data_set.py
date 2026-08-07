@@ -92,6 +92,7 @@ class SearchDataSet:
             dataset_path, save_directory)
 
         all_minimal_search_results = []
+        retrieved_contents = []
 
         for rag_question in tqdm(
             dataset_model.rag_questions,
@@ -102,7 +103,8 @@ class SearchDataSet:
                 search_result = MinimalSearchResults(
                     question_id=rag_question.question_id,
                     question="",
-                    retrieved_sources=[]
+                    retrieved_sources=[],
+                    retrieved_contents=[]
                 )
                 all_minimal_search_results.append(search_result)
                 continue
@@ -113,6 +115,7 @@ class SearchDataSet:
             raw_question_results = self.retriever.search(question, k)
 
             retrieved_sources = []
+            retrieved_contents = []
 
             for result in raw_question_results:
                 source = MinimalSource(
@@ -121,11 +124,13 @@ class SearchDataSet:
                     last_character_index=result["last_character_index"]
                 )
                 retrieved_sources.append(source)
+                retrieved_contents.append(result["content"])
 
             search_result = MinimalSearchResults(
                 question_id=question_id,
                 question=question,
-                retrieved_sources=retrieved_sources
+                retrieved_sources=retrieved_sources,
+                retrieved_contents=retrieved_contents
             )
             all_minimal_search_results.append(search_result)
 

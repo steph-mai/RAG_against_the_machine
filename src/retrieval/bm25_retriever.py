@@ -136,11 +136,11 @@ class BM25Retriever(Retriever):
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     f.seek(start)
-                    result_chunk["content"] = f.read(end - start)
+                    content = f.read(end - start)
             except Exception:
-                result_chunk["content"] = ""
+                content = ""
 
-            final_results.append(result_chunk)
+            result_chunk["content"] = content
             final_results.append(result_chunk)
 
         return final_results
