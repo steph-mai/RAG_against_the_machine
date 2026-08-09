@@ -6,8 +6,7 @@ import json
 import requests
 from src.core.models import (
     MinimalAnswer, MinimalSource,
-    StudentSearchResultsAndAnswer,
-    ChunkContent
+    StudentSearchResultsAndAnswer
 )
 
 
@@ -27,41 +26,66 @@ class Answerer:
                 "in another terminal window and try again."
             )
 
+    def _get_text_from_disk(
+            self, file_path: str, start: int, end: int) -> str:
+        """Ouvre le fichier source et extrait exactement le texte du chunk."""
+        path = Path(file_path)
+        if not path.is_file():
+            return ""
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                content = f.read()
+                return content[start:end]
+        except Exception:
+            return ""
+
     def _format_context(self, retrieved_chunks: list[dict[str, Any]]) -> str:
         all_context = []
+        max_context_length = 4000
 
         for chunk in retrieved_chunks:
-            chunk_obj = ChunkContent(
-                file_path=chunk["file_path"],
-                first_character_index=chunk["first_character_index"],
-                last_character_index=chunk["last_character_index"],
-                text=chunk.get("content", "")
+            text = self._get_text_from_disk(
+                chunk["file_path"],
+                chunk["first_character_index"],
+                chunk["last_character_index"]
             )
+            if text:
+                all_context.append(text)
 
-            all_context.append(chunk_obj.text)
+        full_context = "\n\n---\n\n".join(all_context)
 
-        return "\n\n---\n\n".join(all_context)
+        return full_context[:max_context_length]
 
     def generate_answer(
-            self,
-            question_id: str,
-            query: str,
-            retrieved_chunks: list[dict[str, Any]]
-            ) -> MinimalAnswer:
+        self,
+        question_id: str,
+        query: str,
+        retrieved_chunks: list[dict[str, Any]]
+    ) -> MinimalAnswer:
+
+        if not retrieved_chunks:
+            return MinimalAnswer(
+                question_id=question_id,
+                question=query,
+                retrieved_sources=[],
+                answer="Information not found in context."
+            )
 
         context = self._format_context(retrieved_chunks[:6])
 
         system_instruction = (
-            "You are an expert technical assistant. "
-            "Extract the exact bash commands and technical steps strictly from the provided context to answer the user's question. "
-            "Provide ONLY the direct instructions. Do not use introductory filler, conversational text, or mention the source material. "
-            "If the exact steps cannot be found in the context, reply exactly with: "
-            "\"Information not found in context.\""
+            "You are a helpful technical assistant. "
+            "Answer the user's question clearly, concisely, "
+            "and in natural language. "
+            "You MUST base your answer EXCLUSIVELY on the provided Context. "
+            "Do not invent, hallucinate, or add any external information."
         )
 
         user_content = (
             f"Context:\n{context}\n\n"
-            f"Question: {query}"
+            f"Question: {query}\n"
+            "Answer:"
         )
 
         messages = [
@@ -74,6 +98,7 @@ class Answerer:
                 model=self.model_id,
                 messages=messages,
                 think=False,
+                keep_alive="10m",
                 options={
                     "temperature": 0.3,
                     "num_predict": 300,
@@ -82,11 +107,12 @@ class Answerer:
                 }
             )
             response = response_obj["message"]["content"].strip()
+
         except Exception as e:
             raise RuntimeError(
                 f"Ollama generation failed: {e}. "
                 f"Make sure the model is pulled "
-                "(`ollama pull {self.model_id}`)."
+                f"(`ollama pull {self.model_id}`)."
             )
 
         retrieved_sources = [
@@ -102,9 +128,7 @@ class Answerer:
             question_id=question_id,
             question=query,
             retrieved_sources=retrieved_sources,
-            answer=response,
-            retrieved_contents=[
-                chunk.get("content", "") for chunk in retrieved_chunks]
+            answer=response
         )
 
     def run(
@@ -133,23 +157,12 @@ class Answerer:
             question_id = item["question_id"]
             query = item["question"]
             retrieved_chunks = item["retrieved_sources"]
-            contents = item.get("retrieved_contents", [])
-
-            # Injection du texte pour l'Answerer
-            retrieved_chunks_with_content = [
-                {**source, "content": content}
-                for source, content in zip(retrieved_chunks, contents)
-            ]
 
             minimal_answer = self.generate_answer(
                 question_id=question_id,
                 query=query,
-                retrieved_chunks=retrieved_chunks_with_content
+                retrieved_chunks=retrieved_chunks
             )
-
-            # (Optionnel) Si 'retrieved_contents' est
-            # de trop dans la réponse finale
-            # minimal_answer.retrieved_contents = []
 
             answers_list.append(minimal_answer)
 
@@ -168,8 +181,6 @@ class Answerer:
 
         output_file = output_dir / path.name
 
-        # exclude={"search_results": {"__all__": {"retrieved_contents"}}}
-        # supprime l'affichage du content dans l'output final si besoin !
         with open(output_file, "w", encoding="utf-8") as f:
             f.write(final_output.model_dump_json(indent=4, exclude_none=True))
 

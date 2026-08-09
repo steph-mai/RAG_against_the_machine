@@ -65,12 +65,7 @@ class MinimalSearchResults(BaseModel):
     question_id: str
     question: str
     retrieved_sources: List[MinimalSource]
-    retrieved_contents: List[str] = []
 
-
-class ChunkContent(MinimalSource):
-    """A minimal source that also holds its textual content in memory."""
-    text: str
 
 class MinimalAnswer(MinimalSearchResults):
     """Represents a search result that includes an answer.
