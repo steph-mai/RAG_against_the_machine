@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List
 
 import chromadb
+from chromadb.utils import embedding_functions
 from tqdm import tqdm
 
 from .chunker import MdChunker, PyChunker, TxtChunker
@@ -167,7 +168,8 @@ class DocIndexer:
 
         collection = chroma_client.create_collection(
             name="codebase_chunks",
-            embedding_function=sentence_transformer_ef,
+            embedding_function=(
+                sentence_transformer_ef),  # type: ignore[arg-type]
         )
 
         batch_size = 100
@@ -198,7 +200,8 @@ class DocIndexer:
         Returns:
             None
         """
-        compiler = CorpusVllmCompiler(self.input_dir)
+
+        compiler = CorpusVllmCompiler(str(self.input_dir))
         files_to_process: List[Path] = compiler.compile_corpus()
 
         all_chunks = self._get_all_chunks(files_to_process)
@@ -224,7 +227,7 @@ class DocIndexer:
             if with_embeddings:
                 chunks_to_embed.append(text_to_tokenize)
 
-            clean_chunks.append(chunk_clean_text)
+            clean_chunks.append(" ".join(chunk_clean_text))
 
             tf_in_one_chunk: dict[str, int] = (
                 tokenizer.get_terms_frequency_in_one_chunk(chunk_clean_text)

@@ -6,7 +6,7 @@
 #  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/08/04 16:04:34 by stmaire         #+#    #+#               #
-#  Updated: 2026/08/04 16:04:40 by stmaire         ###   ########.fr        #
+#  Updated: 2026/08/10 14:45:11 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -115,7 +115,7 @@ class Tokenizer:
             A dictionary mapping each token to the number of documents
             in which it appears.
         """
-        doc_frequency_dict = Counter()
+        doc_frequency_dict: dict[str, int] = Counter()
         for terms_frequency_dict in all_term_frequencies:
             for word in terms_frequency_dict.keys():
                 doc_frequency_dict[word] += 1

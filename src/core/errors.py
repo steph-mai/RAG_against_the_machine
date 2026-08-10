@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  errors.py                                         :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 11:39:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/07/23 10:15:40 by stephanie       ###   ########.fr        #
+#  Updated: 2026/08/10 15:10:23 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining custom exceptions for the RAG."""
