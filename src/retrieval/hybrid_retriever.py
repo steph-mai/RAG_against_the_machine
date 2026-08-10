@@ -15,9 +15,9 @@ class HybridRetriever(Retriever):
 
     def __init__(
             self,
-            index_path="data/processed/index.json",
-            chroma_persist_dir="data/chroma"
-            ):
+            index_path: str = "data/processed/index.json",
+            chroma_persist_dir: str = "data/chroma"
+            ) -> None:
         """Initialize the hybrid retriever with BM25 and ChromaDB.
 
         Args:
@@ -58,13 +58,19 @@ class HybridRetriever(Retriever):
             n_results=top_k
         )
 
-        ids = results['ids'][0]
-        distances = results['distances'][0]
+        ids_list = results.get("ids")
+        distances_list = results.get("distances")
+
+        if not ids_list or not distances_list:
+            return []
+
+        ids = ids_list[0]
+        distances = distances_list[0]
 
         semantic_results = []
         for chunk_id, distance in zip(ids, distances):
             chunk_idx = int(chunk_id)
-            score = 1.0 - distance
+            score = 1.0 - float(distance)
             semantic_results.append((chunk_idx, score))
 
         return semantic_results

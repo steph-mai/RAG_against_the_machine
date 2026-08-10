@@ -128,6 +128,19 @@ class BM25Retriever(Retriever):
         for idx, score in raw_results:
             result_chunk = self.all_chunks_data[idx].copy()
             result_chunk["bm25_score"] = score
+
+            file_path = result_chunk["file_path"]
+            start = result_chunk["first_character_index"]
+            end = result_chunk["last_character_index"]
+
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    f.seek(start)
+                    content = f.read(end - start)
+            except Exception:
+                content = ""
+
+            result_chunk["content"] = content
             final_results.append(result_chunk)
 
         return final_results

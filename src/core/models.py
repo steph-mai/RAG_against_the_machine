@@ -1,3 +1,15 @@
+# ************************************************************************* #
+#                                                                           #
+#                                                      :::      ::::::::    #
+#  models.py                                         :+:      :+:    :+:    #
+#                                                  +:+ +:+         +:+      #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
+#                                              +#+#+#+#+#+   +#+            #
+#  Created: 2026/08/10 14:00:28 by stmaire         #+#    #+#               #
+#  Updated: 2026/08/10 14:00:29 by stmaire         ###   ########.fr        #
+#                                                                           #
+# ************************************************************************* #
+
 """Data models for RAG application using Pydantic."""
 
 from pydantic import BaseModel, Field

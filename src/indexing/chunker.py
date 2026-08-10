@@ -6,13 +6,13 @@
 #  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/07/01 09:37:31 by stmaire         #+#    #+#               #
-#  Updated: 2026/08/06 11:08:29 by stmaire         ###   ########.fr        #
+#  Updated: 2026/08/10 15:01:13 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining the chunking strategies for different file types."""
 
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Any, Dict, List
 
 from src.core.models import MinimalSource
 
@@ -39,7 +39,7 @@ class Chunker(ABC):
         chunks_list: List[MinimalSource] = []
 
         overlap: int = max_size // 10
-        lines: str = content.splitlines(keepends=True)
+        lines: list[str] = content.splitlines(keepends=True)
 
         start_index: int = 0
         current_chunk_length: int = 0
@@ -99,13 +99,13 @@ class Chunker(ABC):
 
         return chunks_list
 
-    def _init_state(self) -> dict[str | None, bool | None]:
+    def _init_state(self) -> Dict[str | None, Any]:
         """Initialize the chunker-specific parsing state.
 
         Returns:
             An empty state dictionary for the chunking strategy.
         """
-        state = {}
+        state: Dict[str | None, Any] = {}
         return state
 
     @abstractmethod
@@ -114,7 +114,7 @@ class Chunker(ABC):
         line: str,
         current_chunk_length: int,
         max_size: int,
-        state: dict | None,
+        state: Dict[str | None, Any],
     ) -> bool:
         """Determine whether a line should force a chunk cut.
 
@@ -140,7 +140,7 @@ class TxtChunker(Chunker):
         line: str,
         current_chunk_length: int,
         max_size: int,
-        state: dict | None,
+        state: Dict[str | None, Any],
     ) -> bool:
         """Determine whether an empty line should trigger a chunk cut.
 
@@ -165,7 +165,7 @@ class PyChunker(Chunker):
     MIN_FILL_METHOD = 0.85
     MIN_FILL_BLOCK = 0.95
 
-    def _init_state(self):
+    def _init_state(self) -> Dict[str | None, Any]:
         """Initialize Python-specific parsing state.
 
         Returns:
@@ -178,7 +178,7 @@ class PyChunker(Chunker):
         line: str,
         current_chunk_length: int,
         max_size: int,
-        state: dict | None,
+        state: Dict[str | None, Any],
     ) -> bool:
         """Determine whether a Python line should force a chunk cut.
 
@@ -207,7 +207,7 @@ class PyChunker(Chunker):
 
         if indentation == 0:
             if is_def_or_class or is_decorator:
-                if not state["is_in_decorator_block"] and (
+                if not state.get("is_in_decorator_block", False) and (
                     current_chunk_length > (max_size * self.MIN_FILL_TOP_LEVEL)
                 ):
                     should_cut = True
@@ -217,7 +217,7 @@ class PyChunker(Chunker):
 
         elif indentation == 4:
             if is_def_or_class or is_decorator:
-                if not state["is_in_decorator_block"] and (
+                if not state.get("is_in_decorator_block", False) and (
                     current_chunk_length > (max_size * self.MIN_FILL_METHOD)
                 ):
                     should_cut = True
@@ -241,7 +241,7 @@ class MdChunker(Chunker):
     MIN_THRESHOLD_TO_CUT_IF_H2 = 0.7
     MIN_THRESHOLD_TO_CUT_IF_EMPTY_LINE = 0.8
 
-    def _init_state(self):
+    def _init_state(self) -> Dict[str | None, Any]:
         """Initialize Markdown-specific parsing state.
 
         Returns:
@@ -255,7 +255,7 @@ class MdChunker(Chunker):
         line: str,
         current_chunk_length: int,
         max_size: int,
-        state: dict | None,
+        state: Dict[str | None, Any],
     ) -> bool:
         """Determine whether a Markdown line should force a chunk cut.
 
@@ -271,9 +271,10 @@ class MdChunker(Chunker):
         stripped_line = line.lstrip()
 
         if stripped_line.startswith("```"):
-            state["is_in_code_block"] = not state["is_in_code_block"]
+            state["is_in_code_block"] = not state.get(
+                "is_in_code_block", False)
             return False
-        if state["is_in_code_block"]:
+        if state.get("is_in_code_block", False):
             return False
         if stripped_line.startswith("# ") and current_chunk_length > int(
             max_size * self.MIN_THRESHOLD_TO_CUT_IF_H1
