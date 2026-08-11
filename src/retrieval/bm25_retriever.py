@@ -2,6 +2,8 @@ import json
 import math
 from pathlib import Path
 from typing import Any
+from functools import lru_cache
+from src.indexing.cache import load_index
 from src.core.tokenizer import Tokenizer
 from src.core.errors import RagLoadError
 from .retriever import Retriever
@@ -31,8 +33,7 @@ class BM25Retriever(Retriever):
                 f"Index file not found at {index_path}."
                 f"Please run the indexer first to generate it.")
         try:
-            with open(index_path, mode="r", encoding="utf-8") as f:
-                self.index = json.load(f)
+            self.index = load_index(index_path)
         except json.JSONDecodeError as e:
             raise RagLoadError(f"Error decoding JSON from index file: {e}")
 
@@ -111,6 +112,21 @@ class BM25Retriever(Retriever):
 
         return scores[:top_k]
 
+    @lru_cache(maxsize=128)
+    def _get_cached_raw_scores(
+            self, query: str, top_k: int
+            ) -> tuple[tuple[int, float], ...]:
+        """Compute and cache raw BM25 scores for a given query and top_k.
+
+        Args:
+            query: Query string to rank.
+            top_k: Maximum number of chunk results to return.
+
+        Returns:
+            A tuple of tuples containing chunk indices and their BM25 scores.
+        """
+        return tuple(self.get_raw_scores(query, top_k))
+
     def search(self, query: str, top_k: int) -> list[dict[str, Any]]:
         """Search for relevant chunks and return enriched results.
 
@@ -120,9 +136,9 @@ class BM25Retriever(Retriever):
 
         Returns:
             List of dictionaries containing the chunk data enriched with a
-            BM25 score.
+            BM25 score and actual content read from source files.
         """
-        raw_results = self.get_raw_scores(query, top_k)
+        raw_results = self._get_cached_raw_scores(query, top_k)
 
         final_results = []
         for idx, score in raw_results:
