@@ -19,3 +19,7 @@ dev = [
     "mypy>=1.8.0",
     "types-tqdm"
 ]
+
+[[tool.mypy.overrides]]
+module = "fire.*"
+ignore_missing_imports = true

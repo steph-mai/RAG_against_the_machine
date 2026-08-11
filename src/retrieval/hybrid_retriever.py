@@ -1,4 +1,5 @@
 import chromadb
+from typing import Any
 from .bm25_retriever import BM25Retriever
 from .retriever import Retriever
 from src.core.errors import RagLoadError
@@ -75,7 +76,7 @@ class HybridRetriever(Retriever):
 
         return semantic_results
 
-    def search(self, query: str, top_k: int) -> list[dict]:
+    def search(self, query: str, top_k: int) -> list[dict[str, Any]]:
         """Fuse BM25 and semantic retrieval results
         using reciprocal rank fusion (rrf algorithm)
 

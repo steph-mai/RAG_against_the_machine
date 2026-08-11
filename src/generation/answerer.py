@@ -6,7 +6,7 @@
 #  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/08/10 14:01:41 by stmaire         #+#    #+#               #
-#  Updated: 2026/08/10 17:47:05 by stmaire         ###   ########.fr        #
+#  Updated: 2026/08/11 10:29:01 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 
@@ -153,15 +153,18 @@ class Answerer:
         system_instruction = (
             "You are a helpful technical assistant. "
             "Answer the user's question clearly, concisely, "
-            "and in natural language. Format: text"
-            "You MUST base your answer EXCLUSIVELY on the provided Context. "
-            "Do not invent, hallucinate, or add any external information."
+            "and in natural language. "
+            "You MUST base your answer EXCLUSIVELY on the content"
+            "inside <context> tags. "
+            "Do not invent, hallucinate, or add any external information. "
+            "Do not repeat or quote the <context> or <question> tags"
+            "in your answer. "
+            "Write only the final answer, with no extra tags or labels."
         )
 
         user_content = (
-            f"Context:\n{context}\n\n"
-            f"Question: {query}\n"
-            "Answer:"
+            f"<context>\n{context}\n</context>\n\n"
+            f"<question>\n{query}\n</question>"
         )
 
         messages = [

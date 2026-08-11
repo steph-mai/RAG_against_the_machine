@@ -61,9 +61,9 @@ class RAGCli:
         Returns:
             None
         """
-        if max_chunk_size <= 0:
+        if max_chunk_size <= 10:
             raise RagCliArgumentError(
-                "max_chunk_size must be a positive integer.")
+                "max_chunk_size must be higher or equal to 10.")
         if max_chunk_size > 2000:
             raise RagCliArgumentError(
                 "max_chunk_size can not be higher than 2000 "
