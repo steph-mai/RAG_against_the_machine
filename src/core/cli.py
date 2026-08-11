@@ -2,6 +2,7 @@ from functools import wraps
 from typing import Any, Callable
 
 from src.indexing import DocIndexer
+from src.indexing.cache import clear_index_cache
 from src.core.errors import RagCliArgumentError, RagError
 from src.core.formatters import Formatter
 from src.dataset.evaluator import Evaluator
@@ -72,6 +73,7 @@ class RAGCli:
 
         indexer = DocIndexer(max_chunk_size=max_chunk_size)
         indexer.build_and_save_index(with_embeddings=with_embeddings)
+        clear_index_cache()
 
     @handle_cli_errors
     def search(self, query: str, k: int = 10, hybrid: bool = False) -> str:
