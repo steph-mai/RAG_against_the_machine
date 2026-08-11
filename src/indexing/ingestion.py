@@ -3,16 +3,17 @@
 #                                                      :::      ::::::::    #
 #  ingestion.py                                      :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 14:01:19 by stephanie       #+#    #+#               #
-#  Updated: 2026/06/30 15:09:13 by stephanie       ###   ########.fr        #
+#  Updated: 2026/08/06 11:08:29 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module for discovering and loading the vLLM repository files."""
+import os
 from pathlib import Path
-from typing import Iterator
-from src.errors import RagLoadError
+from typing import List
+from src.core.errors import RagLoadError
 
 
 class CorpusVllmCompiler():
@@ -29,14 +30,15 @@ class CorpusVllmCompiler():
         """
         self.raw_corpus_path = Path(raw_corpus_path)
 
-    def compile_corpus(self) -> Iterator[Path]:
-        """Discover and yield valid Python and Markdown files.
+    def compile_corpus(self) -> List[Path]:
+        """Discover and return valid Python, Text and Markdown files.
 
-        Yields:
-            Iterator[Path]: Paths to valid .py and .md files.
+        Returns:
+            List[Path]: Paths to valid .py, .txt and .md files.
 
         Raises:
-            RagLoadError: If the repository path does not exist or is not a directory.
+            RagLoadError: If the repository path does not exist
+            or is not a directory.
         """
         if not self.raw_corpus_path.exists():
             raise RagLoadError(f"Repository path '{self.raw_corpus_path}' "
@@ -44,8 +46,19 @@ class CorpusVllmCompiler():
         if not self.raw_corpus_path.is_dir():
             raise RagLoadError(f"Repository path '{self.raw_corpus_path}' "
                                f"is not a directory.")
+        if not os.access(self.raw_corpus_path, os.R_OK):
+            raise RagLoadError(f"Permission denied to read repository "
+                               f"at '{self.raw_corpus_path}'.")
+
+        valid_paths = []
+
         for path in self.raw_corpus_path.rglob("*"):
-            if any(part.startswith(".") or part == "__pycache__" for part in path.parts):
+            if any(part.startswith(".")
+                   or part == "__pycache__" for part in path.parts):
                 continue
-            if path.is_file() and path.suffix.lower() in [".py", ".md"]:
-                yield path
+            if path.is_file() and path.suffix.lower() in [
+                ".py", ".md", ".txt"
+            ]:
+                valid_paths.append(path)
+
+        return valid_paths

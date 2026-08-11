@@ -5,19 +5,21 @@ description = "Retrieval Augmented Generation"
 requires-python = "==3.10.*"
 dependencies = [
     "pydantic>=2.0.0",
-    "transformers==5.12.1",
-    "dspy-ai==3.2.1",
     "fire==0.7.1",
     "tqdm==4.68.3",
-    "langchain==1.3.11",
-    "bm25s==0.3.9",
-    "chromadb==1.5.9"
+    "sentence-transformers>=5.6.1",
+    "chromadb==1.5.9",
+    "ollama>=0.6.2",
+    "requests>=2.34.2",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0.0",
     "flake8>=7.0.0",
     "mypy>=1.8.0",
-    "types-tqdm" # pour que Mypy ne râle pas sur tqdm
+    "types-tqdm"
 ]
+
+[[tool.mypy.overrides]]
+module = "fire.*"
+ignore_missing_imports = true

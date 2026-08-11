@@ -3,10 +3,10 @@
 #                                                      :::      ::::::::    #
 #  errors.py                                         :+:      :+:    :+:    #
 #                                                  +:+ +:+         +:+      #
-#  By: stephanie <stephanie@student.42.fr>       +#+  +:+       +#+         #
+#  By: stmaire <stmaire@student.42.fr>           +#+  +:+       +#+         #
 #                                              +#+#+#+#+#+   +#+            #
 #  Created: 2026/06/30 11:39:42 by stephanie       #+#    #+#               #
-#  Updated: 2026/06/30 13:47:24 by stephanie       ###   ########.fr        #
+#  Updated: 2026/08/10 15:10:23 by stmaire         ###   ########.fr        #
 #                                                                           #
 # ************************************************************************* #
 """Module defining custom exceptions for the RAG."""
@@ -77,3 +77,32 @@ class RagValidationError(RagError):
             str: A string tagged with [PYDANTIC ERROR].
         """
         return f"[PYDANTIC ERROR] {self.message}"
+
+
+class RagCliArgumentError(RagError):
+    """
+    Exception raised when an invalid argument is provided to the CLI
+    (e.g., k <= 0).
+    """
+    def __str__(self) -> str:
+        """
+        Return the formatted error message.
+
+        Returns:
+            str: A string tagged with [CLI ERROR].
+        """
+        return f"[CLI ERROR] {self.message}"
+
+
+class RagIndexNotFoundError(RagError):
+    """
+    Exception raised when a search is attempted before the index is built.
+    """
+    def __str__(self) -> str:
+        """
+        Return the formatted error message.
+
+        Returns:
+            str: A string tagged with [INDEX ERROR].
+        """
+        return f"[INDEX ERROR] {self.message}"
