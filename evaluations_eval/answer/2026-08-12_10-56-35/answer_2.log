@@ -1,0 +1,22 @@
+
+============================================================
+QUESTION: What API endpoint does vLLM support for chat completions?
+============================================================
+
+ANSWER:
+The vLLM supports the [Chat Completions API](https://platform.openai.com/docs/api-reference/chat/completions).
+
+------------------------------------------------------------
+SOURCES (10):
+  [1] data/raw/vllm-0.10.1/docs/getting_started/quickstart.md  (chars 9608-10577)
+  [2] data/raw/vllm-0.10.1/docs/getting_started/quickstart.md  (chars 8653-9608)
+  [3] data/raw/vllm-0.10.1/vllm/entrypoints/openai/api_server.py  (chars 24997-25988)
+  [4] data/raw/vllm-0.10.1/vllm/entrypoints/openai/api_server.py  (chars 25888-26431)
+  [5] data/raw/vllm-0.10.1/docs/serving/openai_compatible_server.md  (chars 1855-2844)
+  [6] data/raw/vllm-0.10.1/vllm/benchmarks/lib/endpoint_request_func.py  (chars 5720-6654)
+  [7] data/raw/vllm-0.10.1/examples/online_serving/openai_chat_completion_with_reasoning_streaming.py  (chars 0-994)
+  [8] data/raw/vllm-0.10.1/tests/entrypoints/openai/test_transcription_validation.py  (chars 3878-4491)
+  [9] data/raw/vllm-0.10.1/docs/models/generative_models.md  (chars 5191-5590)
+  [10] data/raw/vllm-0.10.1/tests/v1/kv_connector/nixl_integration/test_disagg_accuracy.py  (chars 1909-2898)
+============================================================
+

@@ -1,0 +1,22 @@
+
+============================================================
+QUESTION: What method should be added to a custom model class in vLLM to provide a unified interface for text embeddings?
+============================================================
+
+ANSWER:
+The method should be added as `get_input_embeddings` inside the `MyModel` class.
+
+------------------------------------------------------------
+SOURCES (10):
+  [1] data/raw/vllm-0.10.1/docs/contributing/model/basic.md  (chars 2439-3256)
+  [2] data/raw/vllm-0.10.1/vllm/config/compilation.py  (chars 14452-15438)
+  [3] data/raw/vllm-0.10.1/vllm/config/__init__.py  (chars 21222-22197)
+  [4] data/raw/vllm-0.10.1/docs/usage/v1_guide.md  (chars 848-1679)
+  [5] data/raw/vllm-0.10.1/tests/entrypoints/openai/test_run_batch.py  (chars 2329-3140)
+  [6] data/raw/vllm-0.10.1/vllm/v1/attention/backends/tree_attn.py  (chars 0-995)
+  [7] data/raw/vllm-0.10.1/vllm/model_executor/layers/vocab_parallel_embedding.py  (chars 6398-7392)
+  [8] data/raw/vllm-0.10.1/docs/contributing/model/multimodal.md  (chars 2773-3757)
+  [9] data/raw/vllm-0.10.1/examples/others/logging_configuration.md  (chars 3384-4370)
+  [10] data/raw/vllm-0.10.1/docs/design/arch_overview.md  (chars 6140-6938)
+============================================================
+

@@ -1,0 +1,22 @@
+
+============================================================
+QUESTION: What does quantization trade off to reduce memory footprint in vLLM?
+============================================================
+
+ANSWER:
+The trade-off in the memory footprint is that for P instances, the memory buffer is not required in PUT and PUT_ASYNC modes, but it is necessary in GET mode. For D instances, a memory buffer is needed in all three modes. The memory buffer for D instances is used to temporarily store KVCache sent by P instances. If it is too large, it will reduce the KVCache space available for normal inference by D instances, thereby decreasing the inference batch size and ultimately leading to a reduction in output throughput.
+
+------------------------------------------------------------
+SOURCES (10):
+  [1] data/raw/vllm-0.10.1/docs/configuration/conserving_memory.md  (chars 3400-4325)
+  [2] data/raw/vllm-0.10.1/docs/features/quantization/inc.md  (chars 2525-3443)
+  [3] data/raw/vllm-0.10.1/docs/design/p2p_nccl_connector.md  (chars 6650-7578)
+  [4] data/raw/vllm-0.10.1/docs/configuration/conserving_memory.md  (chars 1648-2633)
+  [5] data/raw/vllm-0.10.1/docs/features/quantization/gguf.md  (chars 0-976)
+  [6] data/raw/vllm-0.10.1/docs/features/quantization/gptqmodel.md  (chars 0-767)
+  [7] data/raw/vllm-0.10.1/vllm/entrypoints/llm.py  (chars 12656-13619)
+  [8] data/raw/vllm-0.10.1/docs/features/quantization/README.md  (chars 0-580)
+  [9] data/raw/vllm-0.10.1/vllm/engine/llm_engine.py  (chars 11330-12324)
+  [10] data/raw/vllm-0.10.1/docs/features/quantization/auto_awq.md  (chars 0-964)
+============================================================
+
